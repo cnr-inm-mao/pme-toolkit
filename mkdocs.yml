@@ -1,6 +1,6 @@
 site_name: PME-toolkit
 site_description: Parametric Model Embedding toolkit for design-space dimensionality reduction
-site_url: https://example.com/pme-toolkit
+site_url: https://cnr-inm-mao.github.io/pme-toolkit/
 
 theme:
   name: material
