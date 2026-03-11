@@ -20,4 +20,7 @@ jobs:
       - name: Run tests
         uses: matlab-actions/run-command@v2
         with:
-          command: run_tests
+          command: |
+            repo = getenv('GITHUB_WORKSPACE');
+            cd(repo);
+            run(fullfile(repo,'tests','run_tests.m'));
