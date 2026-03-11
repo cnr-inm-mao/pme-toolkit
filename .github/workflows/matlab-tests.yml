@@ -25,4 +25,4 @@ jobs:
             addpath(pwd);
             addpath(genpath(fullfile(pwd,'matlab')));
             addpath(genpath(fullfile(pwd,'tests')));
-            run(fullfile('tests','run_test.m'));
+            run_test
