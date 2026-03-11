@@ -20,4 +20,9 @@ jobs:
       - name: Run tests
         uses: matlab-actions/run-command@v2
         with:
-          command: run_test
+          command: |
+            cd(getenv('MW_ORIG_WORKING_FOLDER'));
+            addpath(pwd);
+            addpath(genpath(fullfile(pwd,'matlab')));
+            addpath(genpath(fullfile(pwd,'tests')));
+            run(fullfile('tests','run_test.m'));
