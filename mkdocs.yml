@@ -7,13 +7,13 @@ theme:
   name: material
 
 nav:
-  - Home: docs/index.md
-  - Quickstart: docs/quickstart.md
-  - Configuration spec: docs/config_spec.md
-  - MATLAB API: docs/matlab_api.md
-  - Python API: docs/python_api.md
-  - Reproducibility: docs/reproducibility.md
-  - Citation: docs/citation.md
-  - Backmapping: docs/backmapping.md
-  - Benchmarks: docs/benchmarks.md
-  - Datasets: docs/datasets.md
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Configuration spec: config_spec.md
+  - MATLAB API: matlab_api.md
+  - Python API: python_api.md
+  - Reproducibility: reproducibility.md
+  - Citation: citation.md
+  - Backmapping: backmapping.md
+  - Benchmarks: benchmarks.md
+  - Datasets: datasets.md
