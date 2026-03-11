@@ -25,7 +25,6 @@ The current repository contains benchmark folders for:
 
 - `glider`
 - `airfoil`
-- `propFC`
 
 ## Dataset availability
 
@@ -35,7 +34,6 @@ At this stage:
 
 - `glider` has repository-aligned dataset metadata under `databases/glider/`;
 - `airfoil` has repository-aligned dataset metadata under `databases/airfoil/`;
-- `propFC` benchmark definitions are present, but public local dataset packaging is not yet aligned in the same way.
 
 ## Recommended reproducible starting point
 

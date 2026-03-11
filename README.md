@@ -99,13 +99,11 @@ The repository contains benchmark definitions for:
 
 - `glider`
 - `airfoil`
-- `propFC`
 
 At this stage:
 
 - **glider** is the best documented benchmark and includes dataset metadata in `databases/glider/`;
 - **airfoil** also includes dataset metadata in `databases/airfoil/`;
-- **propFC** benchmark cases are present, but local public dataset packaging is not yet aligned with the glider/airfoil setup.
 
 See:
 
