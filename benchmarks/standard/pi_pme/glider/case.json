@@ -1,0 +1,52 @@
+{
+  "mode": "pi",
+  "CI": 0.95,
+  "baseline_col": 0,
+  "geom": {
+    "Jdir": 3,
+    "patches": [
+      {
+        "name": "P1",
+        "K": 784
+      }
+    ]
+  },
+  "vars": {
+    "Mbase": 32,
+    "idx_active": [],
+    "fixed_policy": "baseline",
+    "Urange_file": "../../../../databases/glider/range_design.mat",
+    "use_db_range_if_missing": true
+  },
+  "phys": {
+    "fields": [
+      {
+        "name": "Cp",
+        "nCond": 1,
+        "disc": { "K": 784 }
+      }
+    ],
+    "scalars": [
+      {
+        "name": "D",
+        "nCond": 1
+      },
+      {
+        "name": "L",
+        "nCond": 1
+      }
+    ]
+  },
+  "filters": {
+    "remove_nan": true,
+    "iqr": {
+      "enable": true
+    }
+  },
+  "io": {
+    "dbfile": "../../../../databases/glider/database.mat",
+    "transpose_if": "never",
+    "outdir": "results",
+    "save_model": true
+  }
+}

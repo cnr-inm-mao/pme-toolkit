@@ -1,0 +1,17 @@
+{
+  "case_json": "test_glider.json",
+  "reduced_space": {
+    "nconf": 5
+  },
+  "denorm": {
+    "rule": "3sigma",
+    "c": 3.0
+  },
+  "output": {
+    "file": "../results/u_base.txt",
+    "format": "txt",
+    "layout": "col",
+    "what": "Ubase",
+    "write_meta": true
+  }
+}

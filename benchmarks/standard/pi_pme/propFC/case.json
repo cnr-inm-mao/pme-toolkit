@@ -1,0 +1,62 @@
+{
+  "mode": "pi",
+  "CI": 0.95,
+  "baseline_col": 0,
+  "geom": {
+    "Jdir": 3,
+    "patches": [
+      {
+        "name": "P1",
+        "K": 1326
+      }
+    ]
+  },
+  "vars": {
+    "Mbase": 74,
+    "idx_active": [1, 2, 4, 5, 6, 9, 
+                   10,11,13,14,15,16,17,19,
+                   20,21,23,24,25,26,27,29,
+                   30,32,33,34,35,
+                   55,56,57,
+                   60,61,62,66,67,
+                   70,71,72],
+    "fixed_policy": "baseline",
+    "Urange_file": "../../../data/propFC/range_design.csv",
+    "use_db_range_if_missing": true
+  },
+  "phys": {
+    "fields": [  
+      {
+        "name": "Cp",
+        "nCond": 3,
+        "disc": { "K": 1250 }
+      }
+    ],
+    "scalars": [
+      {
+        "name": "KT",
+        "nCond": 1
+      },
+      {
+        "name": "eta",
+        "nCond": 1
+      },
+      {
+        "name": "Gamma",
+        "nCond": 1
+      }
+    ]
+  },
+  "filters": {
+    "remove_nan": true,
+    "iqr": {
+      "enable": true
+    }
+  },
+  "io": {
+    "dbfile": "../../../data/propFC/propFC.mat",
+    "transpose_if": "never",
+    "outdir": "results",
+    "save_model": true
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "mode": "pme",
+  "CI": 0.99,
+  "baseline_col": 0,
+  "geom": {
+    "Jdir": 3,
+    "patches": [
+      {
+        "name": "P1",
+        "K": 784
+      }
+    ]
+  },
+  "vars": {
+    "Mbase": 32,
+    "idx_active": [],
+    "fixed_policy": "baseline",
+    "Urange_file": "../data/glider_range.mat",
+    "use_db_range_if_missing": true
+  },
+  "phys": {
+    "fields": [],
+    "scalars": []
+  },
+  "filters": {
+    "remove_nan": true
+  },
+  "io": {
+    "dbfile": "../data/glider_tiny.mat",
+    "transpose_if": "never",
+    "outdir": "results",
+    "save_model": false
+  }
+}

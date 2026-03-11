@@ -1,0 +1,18 @@
+site_name: PME-toolkit
+site_description: Parametric Model Embedding toolkit for design-space dimensionality reduction
+site_url: https://example.com/pme-toolkit
+
+theme:
+  name: material
+
+nav:
+  - Home: docs/index.md
+  - Quickstart: docs/quickstart.md
+  - Configuration spec: docs/config_spec.md
+  - MATLAB API: docs/matlab_api.md
+  - Python API: docs/python_api.md
+  - Reproducibility: docs/reproducibility.md
+  - Citation: docs/citation.md
+  - Backmapping: docs/backmapping.md
+  - Benchmarks: docs/benchmarks.md
+  - Datasets: docs/datasets.md

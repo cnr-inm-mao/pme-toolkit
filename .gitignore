@@ -1,0 +1,6 @@
+**/*.asv
+**/results/
+**/*.mat
+
+# Keep tiny local validation data tracked
+!tests/data/*.mat

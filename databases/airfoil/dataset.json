@@ -1,0 +1,15 @@
+{
+  "name": "airfoil",
+  "source": "Zenodo",
+  "record": "18958555",
+  "doi": "10.5281/zenodo.18958555",
+  "version": "1.0",
+  "files": {
+    "dbfile": "database.mat"
+  },
+  "download": {
+    "archive_url": "https://zenodo.org/records/18958555/files/pme-benchmark-airfoil.zip",
+    "archive_name": "pme-benchmark-airfoil.zip"
+  }
+}
+
