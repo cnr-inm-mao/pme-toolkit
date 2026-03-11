@@ -2,7 +2,8 @@
 
 [![Docs](https://img.shields.io/badge/docs-online-blue)](https://cnr-inm-mao.github.io/pme-toolkit/)
 [![Docs build](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/docs-pages.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/docs-pages.yml)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18962860.svg)](https://doi.org/10.5281/zenodo.18962860)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18962859.svg)](https://doi.org/10.5281/zenodo.18962859)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 PME-toolkit is an open-source repository for **design-space dimensionality reduction in parametric shape optimization** based on **Parametric Model Embedding (PME)** and its physics-aware variants.
 
