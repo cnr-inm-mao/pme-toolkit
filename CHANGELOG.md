@@ -1,67 +1,97 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to **PME-toolkit** will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-and the project follows [Semantic Versioning](https://semver.org/).
-
----
-
-## [1.0.1] – 2026-03-11
-
-### Added
-- First public release of **PME-toolkit**.
-- MATLAB reference implementation of:
-  - Parametric Model Embedding (PME)
-  - Physics-Informed PME (PI-PME)
-  - Physics-Driven PME (PD-PME)
-- Backmapping workflow for reconstruction of geometries from reduced coordinates.
-- Benchmark framework for evaluating design-space dimensionality reduction methods.
-- Initial benchmark cases including the **bio-inspired underwater glider dataset**.
-- Automatic dataset download from **Zenodo** when required datasets are missing.
-- MATLAB automated tests and continuous integration using GitHub Actions.
-- Initial Python package scaffold to support future feature-parity implementation.
-- GitHub Pages documentation with guides on:
-  - PME methodology
-  - workflow usage
-  - datasets and benchmarks
-  - backmapping.
-- Citation metadata (`CITATION.cff`) and Zenodo DOI integration.
-- Contributing guidelines and project roadmap.
-
-### Changed
-- Repository structure reorganized to clearly separate:
-  - `matlab/` implementation
-  - `python/` implementation
-  - `benchmarks/`
-  - `databases/`
-  - `docs/`
-- Unified configuration workflow for running benchmark cases.
-- Improved dataset management through centralized dataset metadata.
-- Updated README with installation instructions and quick start example.
-- Documentation expanded with detailed explanations of PME variants and workflows.
-
-### Fixed
-- Various documentation inconsistencies between examples and repository structure.
-- Improved robustness of dataset download and extraction utilities.
-- Minor corrections in MATLAB scripts for benchmark execution.
-
-### Notes
-This release establishes the **MATLAB implementation as the reference implementation**
-of the PME-toolkit.
-
-The **Python implementation is currently under development** and provides the
-initial package structure to support future feature-parity with the MATLAB version.
+The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+and semantic versioning principles.
 
 ---
 
 ## [Unreleased]
 
 ### Planned
-- Full Python implementation of the PME workflow.
-- Additional benchmark datasets (e.g., NACA airfoil datasets).
-- Extended visualization utilities for:
-  - modal shapes
-  - reduced-coordinate distributions
-  - reconstruction accuracy.
-- Additional benchmark problems and comparative evaluation tools.
+
+- Full Python implementation of PME workflow
+- Additional benchmark datasets
+- Visualization utilities for:
+  - explained variance
+  - reduced coordinates
+  - geometric modes
+  - reconstruction accuracy
+- Additional validation tests
+- Extended dataset packaging and automation
+
+---
+
+## [1.0.1] – 2026-03-11
+
+### Added
+
+- GitHub public release of **PME-toolkit**
+- Zenodo integration with DOI for the software release
+- Continuous integration workflow for MATLAB tests
+- Automated dataset download support for benchmark datasets
+- Repository badges (CI, DOI, MATLAB)
+
+### Improved
+
+- Repository structure stabilized for public distribution
+- Documentation organization under `docs/`
+- Dataset metadata structure under `databases/`
+- Benchmark configuration workflow
+
+### Fixed
+
+- Minor documentation inconsistencies between examples and repository structure
+- Dataset download robustness improvements
+- Minor fixes in MATLAB benchmark execution scripts
+
+### Notes
+
+This release represents the **first stable public release** of PME-toolkit.
+
+The MATLAB implementation remains the **reference implementation** of the toolkit.
+
+The Python package currently provides infrastructure and configuration utilities
+and will progressively reach feature parity with the MATLAB implementation.
+
+---
+
+## [0.1.0] – Initial public release
+
+### Added
+
+- Initial MATLAB implementation of:
+  - PME
+  - PI-PME
+  - PD-PME
+- Analytical backmapping from reduced space to original design variables
+- JSON-based configuration system for benchmark workflows
+- Benchmark definitions under `benchmarks/`
+- Dataset metadata structure under `databases/`
+- Tiny self-contained glider dataset for repository tests
+- MkDocs documentation site
+- Python package scaffold
+- Python configuration loader and minimal tests
+- MATLAB test suite under `tests/`
+- JOSS paper draft under `paper/`
+
+### Documentation
+
+- Repository overview and usage in `README.md`
+- MATLAB and Python subpackage documentation
+- Benchmark and dataset documentation
+- MkDocs documentation pages:
+  - quickstart
+  - configuration specification
+  - MATLAB API
+  - Python API
+  - reproducibility
+  - backmapping
+  - benchmarks
+  - datasets
+
+### Notes
+
+- MATLAB is currently the **reference implementation**.
+- Python implementation is **work in progress** and currently limited to infrastructure and tests.
