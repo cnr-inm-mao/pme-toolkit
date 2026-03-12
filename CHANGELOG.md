@@ -7,7 +7,7 @@ and semantic versioning principles.
 
 ---
 
-## [0.1.0] – Initial public release
+## [1.0.1] – Initial public release
 
 ### Added
 
