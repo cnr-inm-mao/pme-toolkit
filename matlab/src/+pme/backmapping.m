@@ -56,10 +56,14 @@ p = inputParser;
 p.addRequired('cfg_json', @(s)ischar(s)||isstring(s));
 p.addParameter('x01', [], @(x)isnumeric(x));
 p.addParameter('dry_run', false, @(x)islogical(x)&&isscalar(x));
+p.addParameter('model_file', "", @(x)ischar(x)||isstring(x));
+p.addParameter('output_file', "", @(x)ischar(x)||isstring(x));
 p.parse(cfg_json, varargin{:});
 
 x01_override = p.Results.x01;
 dry_run = p.Results.dry_run;
+model_file_override = string(p.Results.model_file);
+output_file_override = string(p.Results.output_file);
 
 cfg_json = string(cfg_json);
 assert(isfile(cfg_json), 'Config JSON not found: %s', cfg_json);
@@ -90,10 +94,15 @@ if ~isfolder(outdir) && ~isAbsolutePath(outdir)
 end
 
 % -------------------- model file --------------------
-model_file = fullfile(outdir, "model.mat");
-if isfield(cfgBM,'run_case') && isfield(cfgBM.run_case,'model_file') && ~isempty(cfgBM.run_case.model_file)
-    model_file = resolve_path(string(cfgBM.run_case.model_file), case_dir);
+if strlength(model_file_override) > 0
+    model_file = model_file_override;
+else
+    model_file = fullfile(outdir, "model.mat");
+    if isfield(cfgBM,'run_case') && isfield(cfgBM.run_case,'model_file') && ~isempty(cfgBM.run_case.model_file)
+        model_file = resolve_path(string(cfgBM.run_case.model_file), case_dir);
+    end
 end
+
 assert(isfile(model_file), 'Model file not found: %s', model_file);
 
 model_var = "model";
@@ -290,10 +299,13 @@ end
 U = U(:);
 
 % -------------------- output settings --------------------
-assert(isfield(cfgBM,'output') && isfield(cfgBM.output,'file') && ~isempty(cfgBM.output.file), ...
-    'output.file is required.');
-
-out_file = resolve_path(string(cfgBM.output.file), case_dir);
+if strlength(output_file_override) > 0
+    out_file = string(output_file_override);
+else
+    assert(isfield(cfgBM,'output') && isfield(cfgBM.output,'file') && ~isempty(cfgBM.output.file), ...
+        'output.file is required.');
+    out_file = resolve_path(string(cfgBM.output.file), case_dir);
+end
 
 out_fmt = "txt";
 if isfield(cfgBM.output,'format') && ~isempty(cfgBM.output.format)

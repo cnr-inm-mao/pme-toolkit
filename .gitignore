@@ -1,6 +1,15 @@
+# MATLAB temp
 **/*.asv
-**/results/
-**/*.mat
 
-# Keep tiny local validation data tracked
+# Results
+**/results/
+
+# Large datasets
+databases/**/*.mat
+databases/**/*.zip
+
+# Also ignore extracted archives
+databases/**/pme-benchmark-*/
+
+# BUT keep small test data
 !tests/data/*.mat

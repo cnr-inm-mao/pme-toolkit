@@ -1,7 +1,7 @@
 function rep = report(model, DB_used, outdir)
 %PME.REPORT Sanity checks + plots + NMSE/VARP per information source.
 %
-% Key conventions (as requested):
+% Key conventions:
 % - Variables U are NEVER treated as information sources.
 % - Sources ordering: FIELDS first, then SCALARS (physics order).
 % - PME/PI: include GEOM (D) as first source. PD: no geom source.
@@ -10,6 +10,11 @@ function rep = report(model, DB_used, outdir)
 % Saves:
 % - report.mat (rep struct)
 % - pme_varp.mat (var_p) if ninf>0
+% - variance_retained.png
+% - scree_plot.png
+% - nmse_by_source.png      (if ninf>0)
+% - variance_by_source.png  (if ninf>0)
+% - mode_01.png, mode_02.png, mode_03.png (if geometry exists)
 
 if nargin < 3 || isempty(outdir)
     outdir = fullfile(pwd,'results');
@@ -103,16 +108,13 @@ fprintf('[pme.report] reduced from Mact=%d to N=%d  ->  %.2f %% reduction\n', ..
 fprintf('[pme.report] number of information sources = %d\n', ninf);
 
 % ==========================================
-% 3) NMSE per information source (your style)
+% 3) NMSE per information source
 % ==========================================
-% Requested convention:
-% - compute for k = 1..nconf (NOT including k=0)
-% - sources order: (if PI/PME) geom first, then FIELDS, then SCALARS
-%                 (if PD)             FIELDS, then SCALARS
-
 rep.nmse = struct();
 rep.nmse.enable = (ninf > 0);
-rep.nmse.k_grid = 1:nconf;   % IMPORTANT: 1-based, no k=0
+kmax = min(Mact, size(model.Z_full,2));
+rep.nmse.k_grid = 1:kmax;
+rep.kmax = kmax;
 
 if rep.nmse.enable
     sources = pme_build_info_sources(pos, layout, mode);
@@ -127,9 +129,9 @@ if rep.nmse.enable
         var_src(i) = sum(var(Pc(rr,:), 1, 2));
     end
 
-    nmse_t = zeros(ninf, nconf);   % columns correspond to k=1..nconf
+    nmse_t = zeros(ninf, kmax);   % columns correspond to k=1..nconf
 
-    for jconf = 1:nconf
+    for jconf = 1:kmax
         k = jconf; % k modes
         Prec = model.Z_full(:,1:k) * (model.ak_full(:,1:k)');  % [Np x S]
         E = Pc - Prec;
@@ -142,11 +144,13 @@ if rep.nmse.enable
     end
 
     var_t = 1 - nmse_t;
+    nmse_t = real(nmse_t);
+    var_t  = real(var_t);
 
-    % incremental contribution per added mode (your var_p definition)
-    var_p = zeros(ninf, nconf);
+    % incremental contribution per added mode
+    var_p = zeros(ninf, kmax);
     var_p(:,1) = var_t(:,1);
-    for j=2:nconf
+    for j=2:kmax
         var_p(:,j) = var_t(:,j) - var_t(:,j-1);
     end
 
@@ -163,23 +167,21 @@ if rep.nmse.enable
     end
 
     % ---- Global check (consistent with W: each info has weight 1) ----
-    nmse_global = mean(nmse_t, 1);   % 1 x nconf   (mean across sources)
+    nmse_global = mean(nmse_t, 1);   % 1 x nconf
     ev_global   = 1 - nmse_global;   % 1 x nconf
-    
-    % Compare with eigenvalue cumulative / ninf
+
     lam = model.L_full(:);
-    lam_cum = cumsum(lam(1:nconf)).' / max(double(ninf), eps);  % 1 x nconf
-    
-    rep.nmse.nmse_global = nmse_global;
-    rep.nmse.ev_global   = ev_global;
+    lam_cum = cumsum(lam(1:kmax)).' / max(double(ninf), eps);  % 1 x nconf
+
+    rep.nmse.nmse_global  = nmse_global;
+    rep.nmse.ev_global    = ev_global;
     rep.nmse.lam_cum_ninf = lam_cum;
-    
+
     fprintf('\n[pme.report] ===== GLOBAL CHECK (W-consistent) =====\n');
     fprintf('[pme.report] 1 - mean(NMSE_i) at k=nconf = %.6g\n', ev_global(end));
     fprintf('[pme.report] sum(lambda_1..k)/ninf at k=nconf = %.6g\n', lam_cum(end));
     fprintf('[pme.report] diff = %.3g\n', ev_global(end) - lam_cum(end));
 
-    % Save var_p like your legacy workflow
     try
         save(fullfile(outdir,'pme_varp.mat'),'var_p','-v7');
     catch
@@ -188,32 +190,56 @@ if rep.nmse.enable
 end
 
 % =========================
-% 4) Plots (kept simple)
+% 4) Plots
 % =========================
 L = model.L_full(:);
-Mplot = min(Mact, numel(L));
 
-if Mplot >= 1
-    cumPct = cumsum(L(1:Mplot))/max(double(ninf), eps) * 100;
+try
+    pme.plot_variance_retained(model, outdir);
+catch ME
+    warning('[pme.report] plot_variance_retained failed: %s', ME.message);
+end
 
-    fig = figure('Name','Variance retained vs N');
-    hold on;
-    plot(cumPct,'go-');
-    plot([1 Mplot],[cfg.CI*100 cfg.CI*100],'r--');
-    grid on;
-    xlabel('Number of reduced design variables, N [-]');
-    ylabel('Variance retained %');
-    xlim([1 Mplot]);
-    ylim([0 max(100, ceil(max(cumPct)+5))]);
-    hold off;
-    saveas(fig, fullfile(outdir,'cumvar_vars.png'));
-    close(fig);
+try
+    pme.plot_scree_plot(model, outdir);
+catch ME
+    warning('[pme.report] plot_scree_plot failed: %s', ME.message);
+end
 
-    fig = figure('Name','Scree (first Mact)');
-    plot(L(1:Mplot),'ko-'); grid on;
-    xlabel('Mode'); ylabel('\lambda');
-    saveas(fig, fullfile(outdir,'scree.png'));
-    close(fig);
+if rep.nmse.enable
+    try
+        pme.plot_nmse_by_source(rep, outdir);
+    catch ME
+        warning('[pme.report] plot_nmse_by_source failed: %s', ME.message);
+    end
+
+    try
+        pme.plot_variance_by_source(rep, outdir);
+    catch ME
+        warning('[pme.report] plot_variance_by_source failed: %s', ME.message);
+    end
+end
+
+try
+    pme.plot_modes(model, outdir, min(3, nconf));
+catch ME
+    warning('[pme.report] plot_modes failed: %s', ME.message);
+end
+
+% % legacy compatibility if someone still expects old filenames
+% try
+%     if exist(fullfile(outdir,'variance_retained.png'),'file')
+%         copyfile(fullfile(outdir,'variance_retained.png'), fullfile(outdir,'cumvar_vars.png'));
+%     end
+%     if exist(fullfile(outdir,'scree_plot.png'),'file')
+%         copyfile(fullfile(outdir,'scree_plot.png'), fullfile(outdir,'scree.png'));
+%     end
+% catch
+% end
+try
+    pme.plot_variable_modes(model, outdir);
+catch ME
+    warning('[pme.report] plot_variable_modes failed: %s', ME.message);
 end
 
 save(fullfile(outdir,'report.mat'),'rep','-v7.3');
@@ -223,25 +249,29 @@ end
 % ========================= Helper functions =========================
 
 function sources = pme_build_info_sources(pos, layout, mode)
-% SOURCES ORDER (requested):
+% SOURCES ORDER:
 %   PME/PI:  geom (D) first, then FIELDS, then SCALARS
 %   PD:      (no geom), then FIELDS, then SCALARS
 %
 % IMPORTANT: variables U are NEVER a source.
 
 mode = lower(string(mode));
-sources = struct('name',{},'rows',{});
+sources = struct('name',{},'rows',{},'type',{},'group',{},'cond',{},'nCond',{});
 
 % (0) geom only for PME/PI
 if mode ~= "pd"
     if isempty(pos.D)
         error('[pme.report][nmse] Expected geometry block D for mode=%s, but pos.D is empty.', mode);
     end
-    sources(end+1).name = "geom"; %#ok<AGROW>
-    sources(end).rows   = pos.D(:)'; %#ok<AGROW>
+    sources(end+1).name  = "geom"; %#ok<AGROW>
+    sources(end).rows    = pos.D(:)'; %#ok<AGROW>
+    sources(end).type    = "geom"; %#ok<AGROW>
+    sources(end).group   = "geom"; %#ok<AGROW>
+    sources(end).cond    = 1; %#ok<AGROW>
+    sources(end).nCond   = 1; %#ok<AGROW>
 end
 
-% (1) FIELDS first: each condition is one source (block of K rows)
+% (1) FIELDS first: each condition is one source
 if ~isempty(pos.F) && isfield(layout,'F') && layout.F.nRows > 0
     r = pos.F(1);
 
@@ -254,19 +284,33 @@ if ~isempty(pos.F) && isfield(layout,'F') && layout.F.nRows > 0
 
             for c=1:nCond
                 rr = r:(r+K-1);
-                nm = sprintf('%s_cond%d', it.name, c);
-                sources(end+1).name = string(nm); %#ok<AGROW>
-                sources(end).rows   = rr;         %#ok<AGROW>
+
+                if nCond > 1
+                    nm = sprintf('%s(%d)', it.name, c);
+                else
+                    nm = sprintf('%s', it.name);
+                end
+
+                sources(end+1).name  = string(nm); %#ok<AGROW>
+                sources(end).rows    = rr; %#ok<AGROW>
+                sources(end).type    = "field"; %#ok<AGROW>
+                sources(end).group   = string(it.name); %#ok<AGROW>
+                sources(end).cond    = c; %#ok<AGROW>
+                sources(end).nCond   = nCond; %#ok<AGROW>
                 r = r + K;
             end
         end
     else
-        sources(end+1).name = "fields"; %#ok<AGROW>
-        sources(end).rows   = pos.F(:)'; %#ok<AGROW>
+        sources(end+1).name  = "Field"; %#ok<AGROW>
+        sources(end).rows    = pos.F(:)'; %#ok<AGROW>
+        sources(end).type    = "field"; %#ok<AGROW>
+        sources(end).group   = "Field"; %#ok<AGROW>
+        sources(end).cond    = 1; %#ok<AGROW>
+        sources(end).nCond   = 1; %#ok<AGROW>
     end
 end
 
-% (2) SCALARS second: each condition is one source (1 row)
+% (2) SCALARS second: each condition is one source
 if ~isempty(pos.C) && isfield(layout,'C') && layout.C.nRows > 0
     r = pos.C(1);
 
@@ -274,18 +318,28 @@ if ~isempty(pos.C) && isfield(layout,'C') && layout.C.nRows > 0
         for i=1:numel(layout.C.items)
             it = layout.C.items(i);
             for c=1:it.nCond
-                nm = string(it.name);
                 if it.nCond > 1
-                    nm = sprintf('%s_cond%d', it.name, c);
+                    nm = sprintf('%s(%d)', it.name, c);
+                else
+                    nm = sprintf('%s', it.name);
                 end
-                sources(end+1).name = nm; %#ok<AGROW>
-                sources(end).rows   = r;  %#ok<AGROW>
+
+                sources(end+1).name  = string(nm); %#ok<AGROW>
+                sources(end).rows    = r; %#ok<AGROW>
+                sources(end).type    = "scalar"; %#ok<AGROW>
+                sources(end).group   = string(it.name); %#ok<AGROW>
+                sources(end).cond    = c; %#ok<AGROW>
+                sources(end).nCond   = it.nCond; %#ok<AGROW>
                 r = r + 1;
             end
         end
     else
-        sources(end+1).name = "scalars"; %#ok<AGROW>
-        sources(end).rows   = pos.C(:)'; %#ok<AGROW>
+        sources(end+1).name  = "Scalar"; %#ok<AGROW>
+        sources(end).rows    = pos.C(:)'; %#ok<AGROW>
+        sources(end).type    = "scalar"; %#ok<AGROW>
+        sources(end).group   = "Scalar"; %#ok<AGROW>
+        sources(end).cond    = 1; %#ok<AGROW>
+        sources(end).nCond   = 1; %#ok<AGROW>
     end
 end
 end
@@ -314,7 +368,11 @@ for i=1:numel(layout.F.items)
 
     for c=1:nCond
         rr = r:(r+K-1);
-        out(end+1).name  = sprintf('%s_cond%d', it.name, c); %#ok<AGROW>
+        if nCond > 1
+            out(end+1).name = sprintf('%s(%d)', it.name, c); %#ok<AGROW>
+        else
+            out(end+1).name = sprintf('%s', it.name); %#ok<AGROW>
+        end
         out(end).var   = sum(var(Pc(rr,:), 1, 2));
         out(end).nRows = numel(rr);
         r = r + K;
@@ -336,11 +394,12 @@ end
 for i=1:numel(layout.C.items)
     it = layout.C.items(i);
     for c=1:it.nCond
-        out(end+1).name  = it.name; %#ok<AGROW>
         if it.nCond > 1
-            out(end).name = sprintf('%s_cond%d', it.name, c);
+            out(end+1).name = sprintf('%s(%d)', it.name, c); %#ok<AGROW>
+        else
+            out(end+1).name = sprintf('%s', it.name); %#ok<AGROW>
         end
-        out(end).var   = sum(var(Pc(r,:), 1, 2)); % single row
+        out(end).var   = sum(var(Pc(r,:), 1, 2));
         out(end).nRows = 1;
         r = r + 1;
     end

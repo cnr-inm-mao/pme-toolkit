@@ -17,10 +17,10 @@ jobs:
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
 
-      - name: Run tests
+      - name: Run MATLAB tests
         uses: matlab-actions/run-command@v2
         with:
           command: |
             repo = getenv('GITHUB_WORKSPACE');
             cd(repo);
-            run(fullfile(repo,'tests','run_tests.m'));
+            run(fullfile(repo,'tests','matlab','run_tests.m'));
