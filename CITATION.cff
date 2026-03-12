@@ -6,10 +6,11 @@ type: software
 authors:
   - family-names: Serani
     given-names: Andrea
-    affiliation: CNR-INM
+    orcid: https://orcid.org/0000-0002-8814-1793
+    affiliation: National Research Council-Institute of Marine Engineering (CNR-INM)
 
 repository-code: https://github.com/cnr-inm-mao/pme-toolkit
 license: MIT
 
-version: 1.0
+version: 1.0.1
 date-released: 2026-03-11
