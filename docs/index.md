@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <a href="https://cnr-inm-mao.github.io/pme-toolkit">
     <img src="assets/logos/logo-hori-nobg.png" width="300">
   </a>
