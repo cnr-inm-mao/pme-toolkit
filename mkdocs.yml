@@ -5,6 +5,11 @@ use_directory_urls: true
 
 theme:
   name: material
+  language: en
+
+  logo: assets/logos/logo-wave-white-nobg.png
+  favicon: assets/logos/logo-wave-white-nobg.png
+  
 
 nav:
   - Home: index.md
