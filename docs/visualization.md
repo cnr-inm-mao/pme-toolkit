@@ -1,218 +1,158 @@
 # Visualization
 
-PME-toolkit provides MATLAB utilities to inspect and interpret the outcome of dimensionality reduction workflows based on PME, PI-PME, and PD-PME.
+PME-toolkit automatically generates visualization figures during the benchmark workflow.
 
-These visualization tools support both routine benchmark analysis and deeper interpretation of the reduced representation, including variance retention, modal structure, source-wise contributions, and reconstruction quality.
+These figures help interpret the dimensionality reduction results produced by PME, PI-PME, and PD-PME and evaluate the quality of the reduced representation.
 
----
+The figures shown in this page are example outputs generated from the glider benchmark dataset.
 
-## Overview
-
-After running a benchmark case with `run_pme`, the toolkit generates a report structure that can be used for post-processing and visualization.
-
-Typical workflow:
-
-```matlab
-run_pme("benchmarks/glider/pme_glider.json")
-
-load("output/report.mat")
-```
-
-The generated `report` structure can then be passed to the available plotting utilities.
+All plots are automatically produced during the execution of a benchmark case and stored in the `results/` directory.
 
 ---
 
-## Available visualization utilities
+## Visualization workflow
 
-The MATLAB implementation currently provides the following plotting functions:
+Visualization figures are generated automatically when running a benchmark case.
 
-* `pme.plot_scree_plot`
-* `pme.plot_variance_retained`
-* `pme.plot_modes`
-* `pme.plot_variable_modes`
-* `pme.plot_variance_by_source`
-* `pme.plot_nmse_by_source`
+After execution, the `results/` directory contains the generated outputs including figures and report data.
 
-These utilities help interpret PME reductions, especially when different information sources are combined in PI-PME and PD-PME workflows.
+A typical results directory contains files such as:
 
----
+results/
+- report.mat
+- scree_plot.png
+- variance_retained.png
+- variance_by_source.png
+- nmse_by_source.png
+- variable_modes_normalized.png
+- mode_1.png
+- mode_2.png
+- mode_3.png
 
-## Scree plot
-
-The scree plot shows the decay of the modal content retained by the reduction and helps assess the intrinsic dimensionality of the problem.
-
-Example:
-
-```matlab
-pme.plot_scree_plot(report)
-```
-
-This plot is useful to identify whether the relevant information is concentrated in a small number of modes or distributed gradually across the embedding.
-
-Typical questions supported by this plot include:
-
-* How fast does the modal content decay?
-* Is there an elbow suggesting a natural truncation level?
-* Does the reduction indicate a low-dimensional structure?
+The exact files may vary depending on the benchmark configuration and workflow.
 
 ---
 
-## Variance retained
+## Eigenvalue spectrum (Scree plot)
 
-The cumulative retained variance can be visualized as a function of the number of retained modes.
+The scree plot shows the eigenvalue spectrum associated with the embedding.
 
-Example:
+![Eigenvalue spectrum](images/scree_plot.png)
 
-```matlab
-pme.plot_variance_retained(report)
-```
+A rapid decay of the eigenvalues indicates that most of the relevant variability of the design space can be captured using a small number of retained modes.
 
-This plot helps determine how many reduced coordinates are needed to retain a target level of information.
+This plot is useful to assess:
 
-Typical uses include:
-
-* selecting the number of retained dimensions
-* comparing different benchmark cases or formulations
-* verifying whether a compact embedding is sufficient
+- intrinsic dimensionality of the design space
+- relative importance of successive modes
+- potential truncation levels for the reduced representation
 
 ---
 
-## Global modal structure
+## Retained variance
 
-The global PME modes can be visualized using:
+The cumulative retained variance indicates how much of the total variance of the embedding is captured by the retained modes.
 
-```matlab
-pme.plot_modes(report)
-```
+![Retained variance](images/variance_retained.png)
 
-This utility helps inspect the structure of the dominant directions found by the reduction procedure.
+Typical thresholds used in dimensionality reduction include:
 
-Depending on the selected case and available outputs, these modes may represent dominant latent directions affecting geometry, variables, or other embedded sources.
+- 95% retained variance
+- 99% retained variance
 
----
-
-## Variable contributions to modes
-
-When the reduction includes design variables explicitly, the contribution of the original variables to the retained modes can be inspected using:
-
-```matlab
-pme.plot_variable_modes(report)
-```
-
-This plot is particularly useful for interpretability because it helps identify which original design variables are most strongly associated with each reduced coordinate.
-
-This can support:
-
-* qualitative interpretation of the embedding
-* identification of dominant design drivers
-* comparison between purely data-driven and physics-informed reductions
+The selected dimensionality corresponds to the smallest number of modes that satisfies the chosen threshold.
 
 ---
 
-## Variance contribution by source
+## Retained variance by information source
 
-When multiple sources are included in the embedding, such as geometry, design variables, or physics-based quantities, the contribution of each source can be visualized through:
+When multiple information sources are included in the embedding (for example geometry and physical quantities), it is useful to analyze how the retained variance is distributed across them.
 
-```matlab
-pme.plot_variance_by_source(report)
-```
+![Variance by source](images/variance_by_source.png)
 
-This plot helps understand how the retained information is distributed across the different sources included in the reduction.
+This plot helps understand:
 
-It is especially useful for PI-PME and PD-PME analyses, where the user may want to assess whether the embedding is mainly driven by geometry, by physical observables, or by a balance of both.
+- whether the embedding is mainly driven by geometry
+- whether physical observables contribute significantly
+- how balanced the reduced representation is across heterogeneous sources
 
----
-
-## Reconstruction error by source
-
-Source-wise reconstruction quality can be visualized using:
-
-```matlab
-pme.plot_nmse_by_source(report)
-```
-
-This function reports the normalized mean square error for the different sources represented in the model.
-
-This allows the user to check whether the reduced representation reconstructs all sources with comparable quality or whether some sources are reconstructed more accurately than others.
-
-Typical uses include:
-
-* evaluating trade-offs in reduced dimension selection
-* assessing the balance of the embedding across heterogeneous data
-* comparing alternative PME configurations
+This analysis is particularly relevant for PI-PME and PD-PME workflows.
 
 ---
 
-## Interpretation of the plots
+## Reconstruction error by information source
 
-The visualization utilities should not be interpreted independently from the benchmark context. In particular:
+The normalized mean squared reconstruction error (NMSE) can also be analyzed separately for each information source.
 
-* a fast scree decay usually suggests a compact effective dimension
-* high retained variance does not automatically imply low reconstruction error for every source
-* source-wise variance and source-wise NMSE provide complementary views
-* variable-mode plots are especially valuable for interpretability, not only for compression assessment
+![NMSE by source](images/nmse_by_source.png)
 
-For this reason, it is recommended to inspect several plots together rather than relying on a single metric.
+This plot indicates how accurately the reduced representation reconstructs each component of the dataset.
 
----
+Lower NMSE values indicate better reconstruction accuracy.
 
-## Typical post-processing workflow
-
-A typical sequence of post-processing steps is:
-
-```matlab
-run_pme("benchmarks/glider/pme_glider.json")
-
-load("output/report.mat")
-
-pme.plot_scree_plot(report)
-pme.plot_variance_retained(report)
-pme.plot_modes(report)
-pme.plot_variable_modes(report)
-pme.plot_variance_by_source(report)
-pme.plot_nmse_by_source(report)
-```
-
-This provides a compact but informative overview of the quality and interpretability of the reduction.
+This visualization is useful to compare reconstruction quality across heterogeneous data sources.
 
 ---
 
-## Relation with the report utility
+## Variable participation in retained modes
 
-The visualization functions are designed to work consistently with the toolkit reporting workflow.
+When design variables are included in the embedding, their contribution to the retained modes can be visualized.
 
-In the current MATLAB implementation, plotting logic has been refactored into dedicated functions so that:
+![Variable participation](images/variable_modes_normalized.png)
 
-* visualization is modular
-* figures can be generated independently
-* plotting behavior is easier to maintain and extend
+This plot shows the normalized absolute contribution of each design variable to each retained mode.
 
-This separation improves code clarity and makes it easier to reuse the same visualization functions across benchmark cases.
+It helps interpret the reduced coordinates and identify which original variables most strongly influence the latent representation.
 
 ---
 
-## Recommended use in benchmark studies
+## Geometric modes
 
-For reproducible benchmark comparisons, it is recommended to report at least:
+The geometric interpretation of the reduced coordinates can be visualized through modal perturbations of the baseline geometry.
 
-* scree plot
-* cumulative variance retained
-* variance contribution by source
-* NMSE by source
+### Mode 1
 
-When interpretability is a central objective, variable-mode plots should also be included.
+![Mode 1](images/mode_1.png)
 
-These visual summaries are useful both for internal analyses and for figures prepared for publications or benchmark reports.
+### Mode 2
+
+![Mode 2](images/mode_2.png)
+
+### Mode 3
+
+![Mode 3](images/mode_3.png)
+
+In these figures:
+
+- the black curve represents the baseline configuration
+- the blue curve represents the positive perturbation along the mode
+- the red curve represents the negative perturbation
+
+These visualizations provide an intuitive interpretation of how each reduced coordinate modifies the original geometry.
+
+---
+
+## Interpreting the visualizations
+
+The different plots should be interpreted together to obtain a complete understanding of the reduction quality.
+
+Important considerations include:
+
+- eigenvalue decay indicates intrinsic dimensionality
+- retained variance quantifies global information preservation
+- source-wise variance highlights the contribution of heterogeneous data
+- NMSE measures reconstruction accuracy
+- variable participation supports interpretability
+- geometric modes reveal deformation patterns associated with the reduced coordinates
+
+Together, these visualizations support both quantitative evaluation and qualitative interpretation of the reduced design space.
 
 ---
 
 ## Notes
 
-The exact appearance and content of the plots depend on the information available in the generated `report` structure and on the selected workflow configuration.
+The exact appearance and number of generated figures depend on the selected benchmark configuration and the information sources included in the embedding.
 
-For benchmark setup and execution, see the pages on:
+Visualization is handled internally by the MATLAB workflow and is automatically executed during the benchmark run.
 
-* Benchmarks
-* Datasets
-* Reproducibility
-
+For benchmark setup and execution, see the documentation pages on Benchmarks, Datasets, and Reproducibility.
