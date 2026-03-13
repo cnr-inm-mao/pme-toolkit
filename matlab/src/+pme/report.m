@@ -112,9 +112,13 @@ fprintf('[pme.report] number of information sources = %d\n', ninf);
 % ==========================================
 rep.nmse = struct();
 rep.nmse.enable = (ninf > 0);
-kmax = min(Mact, size(model.Z_full,2));
-rep.nmse.k_grid = 1:kmax;
-rep.kmax = kmax;
+
+kplot = min(Mact, size(model.Z_full,2));   % full curve length
+krep  = min(nconf, kplot);                 % reported value at k=nconf
+
+rep.nmse.k_grid = 1:kplot;
+rep.kmax = kplot;
+rep.krep = krep;
 
 if rep.nmse.enable
     sources = pme_build_info_sources(pos, layout, mode);
@@ -124,19 +128,19 @@ if rep.nmse.enable
 
     % Variance per source (denominator): sum of per-row variances
     var_src = zeros(ninf,1);
-    for i=1:ninf
+    for i = 1:ninf
         rr = sources(i).rows;
         var_src(i) = sum(var(Pc(rr,:), 1, 2));
     end
 
-    nmse_t = zeros(ninf, kmax);   % columns correspond to k=1..nconf
+    nmse_t = zeros(ninf, kplot);   % columns correspond to k = 1..kplot
 
-    for jconf = 1:kmax
+    for jconf = 1:kplot
         k = jconf; % k modes
         Prec = model.Z_full(:,1:k) * (model.ak_full(:,1:k)');  % [Np x S]
         E = Pc - Prec;
 
-        for i=1:ninf
+        for i = 1:ninf
             rr = sources(i).rows;
             mse_block = mean(sum(E(rr,:).^2, 1)); % mean over samples
             nmse_t(i, jconf) = mse_block / max(var_src(i), eps);
@@ -148,9 +152,9 @@ if rep.nmse.enable
     var_t  = real(var_t);
 
     % incremental contribution per added mode
-    var_p = zeros(ninf, kmax);
+    var_p = zeros(ninf, kplot);
     var_p(:,1) = var_t(:,1);
-    for j=2:kmax
+    for j = 2:kplot
         var_p(:,j) = var_t(:,j) - var_t(:,j-1);
     end
 
@@ -161,26 +165,26 @@ if rep.nmse.enable
     rep.nmse.var_p   = var_p;
 
     fprintf('\n[pme.report] ===== NMSE (per information source) =====\n');
-    fprintf('[pme.report] k-grid = 1..nconf (printed: k=nconf)\n');
-    for i=1:ninf
-        fprintf('[pme.report] NMSE %-16s = %.6g\n', string(sources(i).name), nmse_t(i,end));
+    fprintf('[pme.report] k-grid = 1..kplot (printed: k=nconf)\n');
+    for i = 1:ninf
+        fprintf('[pme.report] NMSE %-16s = %.6g\n', string(sources(i).name), nmse_t(i,krep));
     end
 
     % ---- Global check (consistent with W: each info has weight 1) ----
-    nmse_global = mean(nmse_t, 1);   % 1 x nconf
-    ev_global   = 1 - nmse_global;   % 1 x nconf
+    nmse_global = mean(nmse_t, 1);   % 1 x kplot
+    ev_global   = 1 - nmse_global;   % 1 x kplot
 
     lam = model.L_full(:);
-    lam_cum = cumsum(lam(1:kmax)).' / max(double(ninf), eps);  % 1 x nconf
+    lam_cum = cumsum(lam(1:kplot)).' / max(double(ninf), eps);  % 1 x kplot
 
     rep.nmse.nmse_global  = nmse_global;
     rep.nmse.ev_global    = ev_global;
     rep.nmse.lam_cum_ninf = lam_cum;
 
     fprintf('\n[pme.report] ===== GLOBAL CHECK (W-consistent) =====\n');
-    fprintf('[pme.report] 1 - mean(NMSE_i) at k=nconf = %.6g\n', ev_global(end));
-    fprintf('[pme.report] sum(lambda_1..k)/ninf at k=nconf = %.6g\n', lam_cum(end));
-    fprintf('[pme.report] diff = %.3g\n', ev_global(end) - lam_cum(end));
+    fprintf('[pme.report] 1 - mean(NMSE_i) at k=nconf = %.6g\n', ev_global(krep));
+    fprintf('[pme.report] sum(lambda_1..k)/ninf at k=nconf = %.6g\n', lam_cum(krep));
+    fprintf('[pme.report] diff = %.3g\n', ev_global(krep) - lam_cum(krep));
 
     try
         save(fullfile(outdir,'pme_varp.mat'),'var_p','-v7');

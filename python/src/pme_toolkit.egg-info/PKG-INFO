@@ -1,3 +1,16 @@
+Metadata-Version: 2.4
+Name: pme-toolkit
+Version: 1.2.0
+Summary: Python implementation scaffold and core PME workflow for PME-toolkit
+Author: Andrea Serani
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.24
+Requires-Dist: scipy>=1.10
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+
 # Python package
 
 This folder contains the **Python implementation** of PME-toolkit.
