@@ -1,4 +1,4 @@
-# Visualization and Results
+# Visualization
 
 PME-toolkit provides MATLAB utilities to inspect and interpret the outcome of dimensionality reduction workflows based on PME, PI-PME, and PD-PME.
 

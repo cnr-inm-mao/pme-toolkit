@@ -12,8 +12,9 @@ nav:
   - Configuration spec: config_spec.md
   - MATLAB API: matlab_api.md
   - Python API: python_api.md
-  - Reproducibility: reproducibility.md
-  - Citation: citation.md
+  - Visualization: visualization.md
   - Backmapping: backmapping.md
   - Benchmarks: benchmarks.md
   - Datasets: datasets.md
+  - Reproducibility: reproducibility.md
+  - Citation: citation.md

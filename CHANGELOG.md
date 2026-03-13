@@ -13,13 +13,45 @@ and semantic versioning principles.
 
 - Full Python implementation of PME workflow
 - Additional benchmark datasets
-- Visualization utilities for:
-  - explained variance
+- Additional validation tests
+- Extended dataset packaging and automation
+- Additional visualization utilities for:
   - reduced coordinates
   - geometric modes
   - reconstruction accuracy
-- Additional validation tests
-- Extended dataset packaging and automation
+
+---
+
+## [1.0.2] – 2026-03-12
+
+### Added
+
+- MATLAB visualization utilities for PME results:
+  - `plot_modes`
+  - `plot_variable_modes`
+  - `plot_variance_retained`
+  - `plot_variance_by_source`
+  - `plot_nmse_by_source`
+  - `plot_scree_plot`
+- Centralized color definitions for data sources via `source_colors`
+- Extended plotting functionality integrated into `pme/report`
+
+### Improved
+
+- Refactoring of PME visualization utilities to separate plotting logic
+  from report generation
+- Improved interpretability of PME reductions through dedicated plots
+  for:
+  - eigenvalue decay (scree plot)
+  - variance retention
+  - source-wise variance contribution
+  - variable contributions to modes
+- Improved consistency of MATLAB reporting outputs
+
+### Notes
+
+This patch release improves **post-processing and visualization of PME results** 
+without modifying the core PME algorithms.
 
 ---
 

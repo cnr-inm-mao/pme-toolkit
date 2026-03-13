@@ -10,7 +10,8 @@ authors:
     affiliation: National Research Council-Institute of Marine Engineering (CNR-INM)
 
 repository-code: https://github.com/cnr-inm-mao/pme-toolkit
+url: https://cnr-inm-mao.github.io/pme-toolkit
 license: MIT
 
-version: 1.0.1
-date-released: 2026-03-11
+version: 1.0.2
+date-released: 2026-03-12

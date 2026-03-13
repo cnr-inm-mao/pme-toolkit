@@ -5,7 +5,7 @@ function out = run_pme(casefile)
 %   dispatches the case to pme.run_case.
 
     if nargin < 1 || strlength(string(casefile)) == 0
-        casefile = "benchmarks/standard/pd_pme/airfoil/case.json";
+        casefile = "benchmarks/standard/pme/glider/case.json";
     end
 
     addpath(genpath("matlab/src"));
