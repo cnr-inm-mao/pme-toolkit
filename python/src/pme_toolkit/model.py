@@ -9,8 +9,10 @@ from numpy.typing import NDArray
 from scipy.linalg import eig
 
 from .config_loader import load_case_json
+from .filters import apply_filters
 from .io import load_mat_database, load_mat_range
 from .layout import parse_layout
+from .weights import build_weights
 
 
 Array = NDArray[np.float64]
@@ -21,7 +23,7 @@ def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
 
     out.setdefault("mode", "pme")
     out.setdefault("CI", 0.95)
-    out.setdefault("baseline_col", 0)
+    out.setdefault("baseline_col", 1)  # MATLAB-style default (1-based)
 
     out.setdefault("filters", {})
     out.setdefault("io", {})
@@ -37,10 +39,15 @@ def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
 
 
 def _choose_nconf(eigvals: Array, ci: float) -> int:
+    eigvals = np.asarray(eigvals, dtype=float).reshape(-1)
+    if eigvals.size == 0:
+        return 1
+
     cum = np.cumsum(eigvals)
-    tot = float(cum[-1]) if eigvals.size > 0 else 0.0
+    tot = float(cum[-1])
     if tot <= 0.0:
         return 1
+
     ratio = cum / tot
     idx = int(np.searchsorted(ratio, ci, side="left"))
     return min(idx + 1, eigvals.size)
@@ -61,10 +68,10 @@ def _slice_blocks(db: Array, layout: dict[str, Any]) -> dict[str, Array]:
         "D": np.asarray(db[d_slice, :], dtype=float),
         "Ubase": np.asarray(db[u_slice, :], dtype=float),
         "F": np.asarray(db[f_slice, :], dtype=float)
-        if layout["F"]["nRows"] > 0
+        if int(layout["F"]["nRows"]) > 0
         else np.zeros((0, db.shape[1]), dtype=float),
         "C": np.asarray(db[c_slice, :], dtype=float)
-        if layout["C"]["nRows"] > 0
+        if int(layout["C"]["nRows"]) > 0
         else np.zeros((0, db.shape[1]), dtype=float),
     }
 
@@ -78,9 +85,7 @@ def _convert_idx_active(
 
     idx = np.asarray(idx_active, dtype=int).ravel()
 
-    # JSON / repository convention is 0-based.
-    # If the user passed 1-based manually, convert only when there is no zero
-    # and all indices are in 1..Mbase.
+    # Repository JSON is usually 0-based. But allow 1-based manual input.
     if np.min(idx) >= 1 and np.max(idx) <= mbase:
         idx = idx - 1
 
@@ -156,6 +161,13 @@ def _prepare_vars(
     uact = (uraw_act - umin) / denom
     uact = np.clip(uact, 0.0, 1.0)
 
+    src_label = "user" if urange_source == "user" else urange_source
+    print(
+        f"[vars] normalized Uact using {src_label} Urange; "
+        f"min/max after clip = {float(np.min(uact)):.3e} / {float(np.max(uact)):.6g} "
+        f"(Mact={int(idx_active.size)})"
+    )
+
     return uact, {
         "idx_active": idx_active,
         "idx_fixed": idx_fixed,
@@ -173,128 +185,93 @@ def _compose_p(mode: str, d: Array, uact: Array, f: Array, c: Array) -> Array:
     mode = mode.lower()
 
     if mode == "pme":
+        # P = [D; U]
         return np.vstack([d, uact])
 
     if mode == "pi":
-        raise NotImplementedError("PI-PME is not implemented yet in the Python port")
+        # P = [D; U; F; C]
+        blocks = [d, uact]
+        if f.size > 0:
+            blocks.append(f)
+        if c.size > 0:
+            blocks.append(c)
+        return np.vstack(blocks)
 
     if mode == "pd":
-        raise NotImplementedError("PD-PME is not implemented yet in the Python port")
+        # P = [U; F; C]
+        blocks = [uact]
+        if f.size > 0:
+            blocks.append(f)
+        if c.size > 0:
+            blocks.append(c)
+        return np.vstack(blocks)
 
     raise ValueError(f"Unknown mode: {mode}")
 
 
-def _baseline_col_zero_based(cfg: dict[str, Any], n_samples: int) -> int:
-    bc = int(cfg.get("baseline_col", 0))
-    if bc < 0 or bc >= n_samples:
-        raise ValueError(f"baseline_col={bc} out of range for {n_samples} samples")
-    return bc
-
-
-def _apply_repository_filters(
-    db: Array,
-    cfg: dict[str, Any],
-) -> tuple[Array, dict[str, Any], Array]:
-    """Replicate the repository filtering order for the currently supported subset.
-
-    For now this implements:
-      1) remove_nan on the FULL DB (exactly like MATLAB filters.m)
-    Goal/IQR are left as future extensions.
-
-    Returns
-    -------
-    db_used
-        Filtered DB.
-    info
-        Filter diagnostics.
-    mask
-        Boolean mask on original columns.
+def _baseline_col_zero_based(cfg: dict[str, Any], ns: int) -> int:
     """
-    db = np.asarray(db, dtype=float)
-    ns = db.shape[1]
-    mask = np.ones(ns, dtype=bool)
-    info: dict[str, Any] = {"Ns_total": int(ns)}
-
-    filters_cfg = dict(cfg.get("filters", {}) or {})
-    remove_nan = bool(filters_cfg.get("remove_nan", True))
-
-    bc = _baseline_col_zero_based(cfg, ns)
-
-    if remove_nan:
-        in_step = int(np.sum(mask))
-        ok_local = np.all(np.isfinite(db[:, mask]), axis=0)
-        kept_step = int(np.sum(ok_local))
-
-        idx = np.flatnonzero(mask)
-        mask[idx[~ok_local]] = False
-
-        # MATLAB behaviour: never drop baseline_col
-        mask[bc] = True
-
-        info["nan_enable"] = True
-        info["nan_in"] = in_step
-        info["nan_kept"] = kept_step
-        info["nan_dropped"] = in_step - kept_step
-    else:
-        info["nan_enable"] = False
-        info["nan_in"] = int(np.sum(mask))
-        info["nan_kept"] = int(np.sum(mask))
-        info["nan_dropped"] = 0
-        mask[bc] = True
-
-    # Goal and IQR are currently not implemented in Python.
-    info["goal_enable"] = False
-    info["iqr_enable"] = False
-    info["total_kept"] = int(np.sum(mask))
-
-    db_used = db[:, mask]
-    return db_used, info, mask
-
-
-def _pme_weights(delta: Array, dlen: int, ulen: int) -> tuple[Array, dict[str, Any]]:
-    """Replicate MATLAB PME weights.m for mode='pme'.
-
-    For PME:
-      - geometry (D) counts as one information source
-      - variables (U) are present but not weighted
+    MATLAB-style baseline_col is 1-based.
+    Allow also Python-style 0-based for robustness.
     """
-
-    n = dlen + ulen
-    w = np.zeros((n, n), dtype=float)
-
-    def invv(x: float) -> float:
-        return 1.0 / max(float(x), np.finfo(float).eps)
-
-    # geometry variance
-    var_d = float(np.sum(np.var(delta[:dlen, :], axis=1, ddof=0)))
-
-    # variables variance (diagnostic only)
-    var_u = float(np.sum(np.var(delta[dlen:dlen+ulen, :], axis=1, ddof=0)))
-
-    w_d = invv(var_d)
-
-    # weights
-    w[:dlen, :dlen] = w_d * np.eye(dlen)
-
-    stats = {
-        "mode": "pme",
-        "sizes": {"D": dlen, "U": ulen, "F": 0, "C": 0},
-        "ninfo": {"D": 1, "F": 0, "C": 0, "total": 1},
-        "wD": w_d,
-        "wU": 0.0,
-        "varD": var_d,
-        "varU": var_u,        # <-- new diagnostic
-    }
-
-    return w, stats
+    bc = int(cfg.get("baseline_col", 1))
+    if 1 <= bc <= ns:
+        return bc - 1
+    if 0 <= bc < ns:
+        return bc
+    raise ValueError(f"baseline_col={bc} out of range for {ns} samples")
 
 
-def _weighted_fit_pme(
+def _baseline_col_local(cfg: dict[str, Any], filter_mask: Array, ns_local: int) -> int:
+    """
+    Convert baseline_col from original DB indexing to local filtered DB indexing.
+
+    Since filters always force baseline to survive, this should always succeed.
+    """
+    mask = np.asarray(filter_mask, dtype=bool).reshape(-1)
+    ns_total = mask.size
+    bc_orig = _baseline_col_zero_based(cfg, ns_total)
+
+    kept = np.flatnonzero(mask)
+    loc = np.where(kept == bc_orig)[0]
+    if loc.size == 0:
+        raise ValueError("baseline column was not found among kept columns")
+    bc_local = int(loc[0])
+
+    if bc_local < 0 or bc_local >= ns_local:
+        raise ValueError(f"Local baseline_col={bc_local} out of range for {ns_local} samples")
+
+    return bc_local
+
+
+def _u_rows_in_p(mode: str, dlen: int, mact: int) -> tuple[int, int]:
+    mode = mode.lower()
+
+    if mode in ("pme", "pi"):
+        start = dlen
+        stop = dlen + mact
+        return start, stop
+
+    if mode == "pd":
+        start = 0
+        stop = mact
+        return start, stop
+
+    raise ValueError(f"Unknown mode: {mode}")
+
+
+def _weighted_fit(
     p: Array,
+    mode: str,
     layout: dict[str, Any],
     uinfo: dict[str, Any],
+    blocks: dict[str, Array],
+    cfg: dict[str, Any],
     baseline_col: int,
-) -> dict[str, Array | int | dict[str, Any]]:
+) -> dict[str, Array | dict[str, Any]]:
+    """
+    Generic weighted fit for PME / PI-PME / PD-PME.
+    """
     s = p.shape[1]
 
     p0 = p[:, [baseline_col]]
@@ -302,10 +279,7 @@ def _weighted_fit_pme(
     delta_m = np.mean(delta, axis=1, keepdims=True)
     pc = delta - delta_m
 
-    dlen = int(layout["D"]["nRows"])
-    ulen = int(uinfo["Mact"])
-
-    w, stats_w = _pme_weights(delta, dlen, ulen)
+    w, stats_w = build_weights(delta, layout, cfg, uinfo, blocks)
 
     a = (pc @ pc.T) / float(s)
     aw = a @ w
@@ -318,10 +292,12 @@ def _weighted_fit_pme(
     l_full = np.maximum(eigvals_raw[order], 0.0)
     z_full = eigvecs_raw[:, order]
 
-    # Normalize columns so that Z' W Z = I
+    # Normalize Z so that Z' W Z = I
     an = np.diag(z_full.T @ w @ z_full)
     an = np.sqrt(np.maximum(an, np.finfo(float).eps))
     z_full = z_full / an[None, :]
+
+    ak_full = pc.T @ w @ z_full
 
     return {
         "P0": p0,
@@ -331,6 +307,7 @@ def _weighted_fit_pme(
         "L_full": l_full,
         "Z_full": z_full,
         "Pc": pc,
+        "ak_full": ak_full,
     }
 
 
@@ -348,6 +325,7 @@ class PmeModel:
     eigvals_full: Array
     z_full: Array
     alpha_train: Array
+    ak_full: Array
     uinfo: dict[str, Any]
     nconf: int
     baseline_col: int
@@ -367,6 +345,19 @@ class PmeModel:
         alpha = pc.T @ self.w @ self.z_reduced
         return np.asarray(alpha, dtype=float)
 
+    def transform_valid(self, db: Array) -> Array:
+        """
+        Transform only the columns retained by the fit-time filter mask.
+        Useful when db is the original full database.
+        """
+        db = np.asarray(db, dtype=float)
+        mask = np.asarray(self.filter_mask, dtype=bool)
+        if db.shape[1] != mask.size:
+            raise ValueError(
+                f"DB has {db.shape[1]} samples but filter_mask has length {mask.size}"
+            )
+        return self.transform(db[:, mask])
+
     def inverse_active(self, alpha: Array) -> Array:
         alpha = np.asarray(alpha, dtype=float)
         alpha = np.atleast_2d(alpha)
@@ -377,8 +368,7 @@ class PmeModel:
 
         d_rows = int(self.layout["D"]["nRows"])
         u_rows = int(self.uinfo["Mact"])
-        start = d_rows
-        stop = d_rows + u_rows
+        start, stop = _u_rows_in_p(self.mode, d_rows, u_rows)
 
         uact = p_hat[start:stop, :].T
         return np.asarray(uact, dtype=float)
@@ -403,34 +393,61 @@ class PmeModel:
         return out
 
 
-def fit_pme(
+def fit_model(
     db: Array,
     cfg: dict[str, Any],
     *,
     urange_full: Array | None = None,
+    filter_mask: Array | None = None,
+    filter_info: dict[str, Any] | None = None,
+    db_total_shape: tuple[int, int] | None = None,
 ) -> PmeModel:
+    """
+    Generic fit for PME / PI-PME / PD-PME.
+
+    Behavior:
+    - if filter_mask/filter_info are provided, assume db is already DB_used
+    - otherwise apply filters internally as a fallback, so standalone use still works
+    """
     cfg = _defaults(cfg)
     mode = str(cfg["mode"]).lower()
 
-    if mode != "pme":
-        raise NotImplementedError(
-            "This Python port currently supports only PME. "
-            "PI-PME and PD-PME remain TODO."
-        )
+    if mode not in ("pme", "pi", "pd"):
+        raise ValueError(f"Unsupported mode: {mode}")
 
     layout = parse_layout(cfg)
     db = np.asarray(db, dtype=float)
 
-    # IMPORTANT: MATLAB filters on the FULL DB before slicing blocks.
-    db_used, filter_info, filter_mask = _apply_repository_filters(db, cfg)
+    # Fallback behavior for standalone calls
+    if filter_mask is None or filter_info is None:
+        filt = apply_filters(db, cfg, layout)
+        db_fit = np.asarray(filt.db_used, dtype=float)
+        filter_mask = np.asarray(filt.mask, dtype=bool)
+        filter_info = dict(filt.info)
+        if db_total_shape is None:
+            db_total_shape = tuple(db.shape)
+    else:
+        db_fit = np.asarray(db, dtype=float)
+        filter_mask = np.asarray(filter_mask, dtype=bool)
+        filter_info = dict(filter_info)
+        if db_total_shape is None:
+            db_total_shape = tuple(db.shape)
 
-    blocks = _slice_blocks(db_used, layout)
+    blocks = _slice_blocks(db_fit, layout)
     uact, uinfo = _prepare_vars(blocks["Ubase"], cfg, urange_full)
     p = _compose_p(mode, blocks["D"], uact, blocks["F"], blocks["C"])
 
-    baseline_col = _baseline_col_zero_based(cfg, p.shape[1])
+    baseline_col = _baseline_col_local(cfg, filter_mask, p.shape[1])
 
-    weighted = _weighted_fit_pme(p, layout, uinfo, baseline_col)
+    weighted = _weighted_fit(
+        p,
+        mode,
+        layout,
+        uinfo,
+        blocks,
+        cfg,
+        baseline_col,
+    )
 
     l_full = np.asarray(weighted["L_full"], dtype=float)
     z_full = np.asarray(weighted["Z_full"], dtype=float)
@@ -438,6 +455,7 @@ def fit_pme(
     p0 = np.asarray(weighted["P0"], dtype=float)
     delta_m = np.asarray(weighted["delta_m"], dtype=float)
     pc = np.asarray(weighted["Pc"], dtype=float)
+    ak_full = np.asarray(weighted["ak_full"], dtype=float)
 
     nconf = _choose_nconf(l_full, float(cfg["CI"]))
     z_reduced = z_full[:, :nconf]
@@ -458,17 +476,52 @@ def fit_pme(
         eigvals_full=l_full,
         z_full=z_full,
         alpha_train=np.asarray(alpha_train, dtype=float),
+        ak_full=ak_full,
         uinfo=uinfo,
         nconf=nconf,
         baseline_col=baseline_col,
         db_used_shape=(p.shape[0], p.shape[1]),
         filter_mask=np.asarray(filter_mask, dtype=bool),
-        filter_info=filter_info,
+        filter_info=dict(filter_info),
         stats_w=weighted["statsW"],  # type: ignore[arg-type]
     )
 
 
+def fit_pme(
+    db: Array,
+    cfg: dict[str, Any],
+    *,
+    urange_full: Array | None = None,
+    filter_mask: Array | None = None,
+    filter_info: dict[str, Any] | None = None,
+    db_total_shape: tuple[int, int] | None = None,
+) -> PmeModel:
+    """
+    Backward-compatible public entry point.
+
+    Despite the historical name, this now supports:
+      - mode='pme'
+      - mode='pi'
+      - mode='pd'
+    based on cfg["mode"].
+    """
+    return fit_model(
+        db,
+        cfg,
+        urange_full=urange_full,
+        filter_mask=filter_mask,
+        filter_info=filter_info,
+        db_total_shape=db_total_shape,
+    )
+
+
 def fit_from_case(case_json: str | Path) -> PmeModel:
+    """
+    Load case.json + .mat inputs and fit the model.
+
+    Standalone path: filters are applied internally by fit_pme(...)
+    if not handled upstream by run_case.py.
+    """
     cfg, _ = load_case_json(case_json)
 
     io_cfg = dict(cfg.get("io", {}) or {})

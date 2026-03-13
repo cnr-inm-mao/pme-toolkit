@@ -8,6 +8,7 @@ Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 Requires-Dist: numpy>=1.24
 Requires-Dist: scipy>=1.10
+Requires-Dist: matplotlib>=3.7
 Provides-Extra: dev
 Requires-Dist: pytest>=7.4; extra == "dev"
 

@@ -6,6 +6,8 @@ src/pme_toolkit/config_loader.py
 src/pme_toolkit/io.py
 src/pme_toolkit/layout.py
 src/pme_toolkit/model.py
+src/pme_toolkit/plotting.py
+src/pme_toolkit/report.py
 src/pme_toolkit.egg-info/PKG-INFO
 src/pme_toolkit.egg-info/SOURCES.txt
 src/pme_toolkit.egg-info/dependency_links.txt
