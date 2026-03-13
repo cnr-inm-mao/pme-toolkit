@@ -1,4 +1,8 @@
-# PME-toolkit
+<p align="center">
+  <a href="https://cnr-inm-mao.github.io/pme-toolkit">
+    <img src="assets/logos/logo-hori-nobg.png" width="300">
+  </a>
+</p>
 
 PME-toolkit is an open-source repository for **design-space dimensionality reduction in parametric shape optimization** based on **Parametric Model Embedding (PME)** and its physics-aware variants.
 
