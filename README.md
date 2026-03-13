@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://cnr-inm-mao.github.io/pme-toolkit/">
-    <img src="docs/logos/logo-hori.png" width="300">
+    <img src="docs/assets/logos/logo-hori.png" width="300">
   </a>
 </p>
 
