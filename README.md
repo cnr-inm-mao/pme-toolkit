@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://cnr-inm-mao.github.io/pme-toolkit/">
+    <img src="docs/logos/logo-hori.png" width="300">
+  </a>
+</p>
+
 # PME-toolkit
 
 [![Docs](https://img.shields.io/badge/docs-online-blue)](https://cnr-inm-mao.github.io/pme-toolkit/)
