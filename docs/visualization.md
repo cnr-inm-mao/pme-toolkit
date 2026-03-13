@@ -113,9 +113,9 @@ It helps interpret the reduced coordinates and identify which original variables
 The geometric interpretation of the reduced coordinates can be visualized through modal perturbations of the baseline geometry.
 
 <p align="center">
-  <img src="images/mode_01.png" width="31%">
-  <img src="images/mode_02.png" width="31%">
-  <img src="images/mode_03.png" width="31%">
+  <img src="../images/mode_01.png" width="31%">
+  <img src="../images/mode_02.png" width="31%">
+  <img src="../images/mode_03.png" width="31%">
 </p>
 
 <p align="center"><em>First three geometric modes of the PME embedding.</em></p>
