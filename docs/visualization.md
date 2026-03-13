@@ -18,6 +18,7 @@ After execution, the `results/` directory contains the generated outputs includi
 
 A typical results directory contains files such as:
 
+```
 results/
 - report.mat
 - scree_plot.png
@@ -28,6 +29,7 @@ results/
 - mode_1.png
 - mode_2.png
 - mode_3.png
+```
 
 The exact files may vary depending on the benchmark configuration and workflow.
 
@@ -112,15 +114,15 @@ The geometric interpretation of the reduced coordinates can be visualized throug
 
 ### Mode 1
 
-![Mode 1](images/mode_1.png)
+![Mode 1](images/mode_01.png)
 
 ### Mode 2
 
-![Mode 2](images/mode_2.png)
+![Mode 2](images/mode_02.png)
 
 ### Mode 3
 
-![Mode 3](images/mode_3.png)
+![Mode 3](images/mode_03.png)
 
 In these figures:
 
