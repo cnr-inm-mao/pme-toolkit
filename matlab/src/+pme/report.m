@@ -80,19 +80,18 @@ end
 
 fprintf('\n[pme.report] ===== SANITY CHECK: variance by component =====\n');
 fprintf('[pme.report] mode=%s, S=%d, Mact=%d, CI=%.4f\n', rep.mode, S, Mact, cfg.CI);
-fprintf('[pme.report] var_total   = %.6e\n', rep.var.total);
-fprintf('[pme.report] var_geom    = %.6e (rows=%d)\n', rep.var.geom, numel(pos.D));
-fprintf('[pme.report] var_vars    = %.6e (rows=%d)\n', rep.var.vars, numel(pos.U));
+fprintf('[pme.report] var_geom    d  = %.6e (rows=%d)\n', rep.var.geom, numel(pos.D));
+fprintf('[pme.report] var_vars    u  = %.6e (rows=%d)\n', rep.var.vars, numel(pos.U));
 
 if ~isempty(rep.var.fields)
     for i=1:numel(rep.var.fields)
-        fprintf('[pme.report] var_field   %-16s = %.6e (rows=%d)\n', ...
+        fprintf('[pme.report] var_field   %-2s = %.6e (rows=%d)\n', ...
             rep.var.fields(i).name, rep.var.fields(i).var, rep.var.fields(i).nRows);
     end
 end
 if ~isempty(rep.var.scalars)
     for i=1:numel(rep.var.scalars)
-        fprintf('[pme.report] var_scalar  %-16s = %.6e (rows=%d)\n', ...
+        fprintf('[pme.report] var_scalar  %-2s = %.6e (rows=%d)\n', ...
             rep.var.scalars(i).name, rep.var.scalars(i).var, rep.var.scalars(i).nRows);
     end
 end
@@ -167,13 +166,13 @@ if rep.nmse.enable
     fprintf('\n[pme.report] ===== NMSE (per information source) =====\n');
     fprintf('[pme.report] k-grid = 1..kplot (printed: k=nconf)\n');
     for i = 1:ninf
-        fprintf('[pme.report] NMSE %-16s = %.6g\n', string(sources(i).name), nmse_t(i,krep));
+        fprintf('[pme.report] NMSE %-5s = %.6g\n', string(sources(i).name), nmse_t(i,krep));
     end
-
+    
     % ---- Global check (consistent with W: each info has weight 1) ----
     nmse_global = mean(nmse_t, 1);   % 1 x kplot
     ev_global   = 1 - nmse_global;   % 1 x kplot
-
+    
     lam = model.L_full(:);
     lam_cum = cumsum(lam(1:kplot)).' / max(double(ninf), eps);  % 1 x kplot
 
@@ -181,8 +180,11 @@ if rep.nmse.enable
     rep.nmse.ev_global    = ev_global;
     rep.nmse.lam_cum_ninf = lam_cum;
 
+    fprintf('[pme.report] NMSE %-5s = %.6g\n', 'total', nmse_global(krep));
+
+
     fprintf('\n[pme.report] ===== GLOBAL CHECK (W-consistent) =====\n');
-    fprintf('[pme.report] 1 - mean(NMSE_i) at k=nconf = %.6g\n', ev_global(krep));
+    fprintf('[pme.report] 1 - NMSE_total at k=nconf = %.6g\n', ev_global(krep));
     fprintf('[pme.report] sum(lambda_1..k)/ninf at k=nconf = %.6g\n', lam_cum(krep));
     fprintf('[pme.report] diff = %.3g\n', ev_global(krep) - lam_cum(krep));
 

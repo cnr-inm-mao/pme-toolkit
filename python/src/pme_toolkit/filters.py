@@ -75,23 +75,30 @@ def _print_step(tag: str, kept_step: int, in_step: int, kept_cum: int, ns_total:
 
 def _resolve_goal_row(metric: dict[str, Any], layout: dict[str, Any]) -> int:
     """
-    Return 0-based row index.
+    Return 0-based absolute row index in DB.
 
-    MATLAB accepts:
-    - metric.row        : absolute row in DB, 1-based
-    - metric.c_offset   : offset inside scalar block C, 1-based
+    JSON convention:
+    - metric.row is 0-based absolute DB row
+    - metric.c_offset is 0-based offset inside scalar block C
+
+    MATLAB path:
+    read_case_json.m converts JSON 0-based -> MATLAB 1-based first,
+    then filters.m uses:
+        r = layout.C.rows(1) + m.c_offset - 1
+
+    In Python we stay 0-based throughout, so:
+        r = layout.C.rows.start + c_offset
     """
     if "row" in metric and metric["row"] not in (None, ""):
-        return int(metric["row"]) - 1
+        return int(metric["row"])
 
     if "c_offset" in metric and metric["c_offset"] not in (None, ""):
         c_rows = layout.get("C", {}).get("rows")
         if c_rows is None:
             raise ValueError("[filters][goal] c_offset specified but layout.C.rows is missing")
-        return int(c_rows.start) + int(metric["c_offset"]) - 1
+        return int(c_rows.start) + int(metric["c_offset"])
 
     raise ValueError("[filters][goal] each metric must define 'row' or 'c_offset'")
-
 
 def _goal_keep_mask(
     db_current: Array,
@@ -223,8 +230,10 @@ def _iqr_keep_mask(
 
     for r in range(start_row, nr):
         vals = db_current[r, :]
-        q1 = float(np.quantile(vals, 0.25))
-        q3 = float(np.quantile(vals, 0.75))
+        #q1 = float(np.quantile(vals, 0.25))
+        #q3 = float(np.quantile(vals, 0.75))
+        q1 = float(np.percentile(vals, 25, method="midpoint"))
+        q3 = float(np.percentile(vals, 75, method="midpoint"))
         iqr = q3 - q1
 
         lo = q1 - k_iqr * iqr

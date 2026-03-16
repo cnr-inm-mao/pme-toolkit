@@ -1,0 +1,23 @@
+Dataset: PME Benchmark – Bio-Inspired Glider
+
+Matrix: database.mat
+Size: 3170 × 16385
+
+Row blocks:
+
+1–784      x coordinates of geometry centroids
+785–1568   y coordinates
+1569–2352  z coordinates
+
+2353–2384  design variables (32)
+
+2385–3168  pressure coefficient Cp (784 panels)
+
+3169       Drag force
+3170       Lift force
+
+
+Columns:
+
+1          baseline configuration
+2–16385    Sobol sampled configurations

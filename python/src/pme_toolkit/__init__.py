@@ -28,6 +28,7 @@ from .plotting import (
 from .filters import apply_filters, FilterResult
 from .weights import build_weights, build_wf, build_wc
 from .model import PmeModel, fit_from_case, fit_model, fit_pme
+from .datasets import ensure_case_inputs
 
 __all__ = [
     "load_case_json",
@@ -54,4 +55,5 @@ __all__ = [
     "build_weights",
     "build_wf",
     "build_wc",
+    "ensure_case_inputs",
 ]

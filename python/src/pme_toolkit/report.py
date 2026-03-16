@@ -283,58 +283,64 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
 
 def _variance_summary(model: PmeModel) -> dict[str, Any]:
     """
-    Sanity-check variance summary, close to MATLAB report style.
+    Sanity-check variance summary, aligned with MATLAB report style.
     """
     mode = _mode_str(model)
-    stats = dict(model.stats_w)
-
-    out: dict[str, Any] = {
-        "mode": mode,
-        "var_total": np.nan,
-        "var_geom": np.nan,
-        "var_vars": np.nan,
-        "rows_geom": int(model.layout["D"]["nRows"]),
-        "rows_vars": int(model.uinfo["Mact"]),
-    }
-
-    if "varD" in stats:
-        out["var_geom"] = float(stats["varD"])
-    if "varU" in stats:
-        out["var_vars"] = float(stats["varU"])
-
-    if mode == "pme":
-        vg = float(out["var_geom"])
-        vu = float(out["var_vars"])
-        out["var_total"] = vg + vu
-        return out
-
-    # For PI / PD, build a fuller summary from model.pc and P-space positions
+    rec = _reconstruction_curves(model)
     pos = _p_blocks(model)
     pc = np.asarray(model.pc, dtype=float)
 
+    out: dict[str, Any] = {
+        "mode": mode,
+        "var_total": 0.0,
+        "var_geom": 0.0,
+        "var_vars": 0.0,
+        "rows_geom": int(pos["D"].size),
+        "rows_vars": int(pos["U"].size),
+        "field_sources": [],
+        "scalar_sources": [],
+    }
+
     if pos["D"].size > 0:
         out["var_geom"] = float(np.sum(np.var(pc[pos["D"], :], axis=1, ddof=0)))
+
     if pos["U"].size > 0:
         out["var_vars"] = float(np.sum(np.var(pc[pos["U"], :], axis=1, ddof=0)))
 
-    var_f = float(np.sum(np.var(pc[pos["F"], :], axis=1, ddof=0))) if pos["F"].size > 0 else 0.0
-    var_c = float(np.sum(np.var(pc[pos["C"], :], axis=1, ddof=0))) if pos["C"].size > 0 else 0.0
+    # pull per-source variances from reconstruction curves
+    sources = rec["sources"]
+    var_src = np.asarray(rec["var_src"], dtype=float)
 
-    out["var_fields"] = var_f
-    out["var_scalars"] = var_c
-    out["rows_fields"] = int(pos["F"].size)
-    out["rows_scalars"] = int(pos["C"].size)
+    for src, v in zip(sources, var_src):
+        if src.type == "field":
+            out["field_sources"].append(
+                {
+                    "name": src.name,
+                    "group": src.group,
+                    "cond": src.cond,
+                    "nCond": src.nCond,
+                    "rows": int(src.rows.size),
+                    "var": float(v),
+                }
+            )
+        elif src.type == "scalar":
+            out["scalar_sources"].append(
+                {
+                    "name": src.name,
+                    "group": src.group,
+                    "cond": src.cond,
+                    "nCond": src.nCond,
+                    "rows": int(src.rows.size),
+                    "var": float(v),
+                }
+            )
 
-    parts = []
-    for key in ("var_geom", "var_vars"):
-        val = out.get(key, np.nan)
-        if np.isfinite(val):
-            parts.append(float(val))
-    parts.extend([var_f, var_c])
+    total = float(out["var_geom"]) + float(out["var_vars"])
+    total += sum(float(x["var"]) for x in out["field_sources"])
+    total += sum(float(x["var"]) for x in out["scalar_sources"])
+    out["var_total"] = total
 
-    out["var_total"] = float(np.sum(parts))
     return out
-
 
 def build_report(model: PmeModel) -> dict[str, Any]:
     """
@@ -426,30 +432,27 @@ def print_report(model: PmeModel) -> dict[str, Any]:
     print()
     print("[pme.report] ===== SANITY CHECK: variance by component =====")
     print(f"[pme.report] mode={mode}, S={s}, Mact={mact}, CI={ci:.4f}")
-    print(f"[pme.report] var_total   = {var_total:.6e}")
 
-    if np.isfinite(var.get("var_geom", np.nan)):
+    print(
+        f"[pme.report] var_geom    d  = {float(var.get('var_geom', 0.0)):.6e} "
+        f"(rows={int(var.get('rows_geom', 0))})"
+    )
+
+    print(
+        f"[pme.report] var_vars    u  = {float(var.get('var_vars', 0.0)):.6e} "
+        f"(rows={int(var.get('rows_vars', 0))})"
+    )
+
+    for item in var.get("field_sources", []):
         print(
-            f"[pme.report] var_geom    = {float(var['var_geom']):.6e} "
-            f"(rows={int(var.get('rows_geom', 0))})"
+            f"[pme.report] var_field   {str(item['name']):<2} = {float(item['var']):.6e} "
+            f"(rows={int(item['rows'])})"
         )
 
-    if np.isfinite(var.get("var_vars", np.nan)):
+    for item in var.get("scalar_sources", []):
         print(
-            f"[pme.report] var_vars    = {float(var['var_vars']):.6e} "
-            f"(rows={int(var.get('rows_vars', 0))})"
-        )
-
-    if "var_fields" in var:
-        print(
-            f"[pme.report] var_fields  = {float(var['var_fields']):.6e} "
-            f"(rows={int(var.get('rows_fields', 0))})"
-        )
-
-    if "var_scalars" in var:
-        print(
-            f"[pme.report] var_scalars = {float(var['var_scalars']):.6e} "
-            f"(rows={int(var.get('rows_scalars', 0))})"
+            f"[pme.report] var_scalar  {str(item['name']):<2} = {float(item['var']):.6e} "
+            f"(rows={int(item['rows'])})"
         )
 
     print()
@@ -465,7 +468,11 @@ def print_report(model: PmeModel) -> dict[str, Any]:
     print(f"[pme.report] k-grid = 1..kplot (printed: k=nconf)")
 
     for src_name, value in rep["nmse"]["nmse_at_nconf"].items():
-        print(f"[pme.report] NMSE {str(src_name):<16} = {float(value):.9f}")
+        print(f"[pme.report] NMSE {str(src_name):<5} = {float(value):.9f}")
+
+    nmse_total = float(rep["global_check"]["nmse_global"][krep - 1])
+    print(f"[pme.report] NMSE {'total':<5} = {nmse_total:.9f}")
+
 
     one_minus_mean_nmse = float(rep["global_check"]["one_minus_mean_nmse"])
     eig_ratio = float(rep["global_check"]["eig_ratio"])
@@ -473,8 +480,9 @@ def print_report(model: PmeModel) -> dict[str, Any]:
 
     print()
     print("[pme.report] ===== GLOBAL CHECK (W-consistent) =====")
-    print(f"[pme.report] 1 - mean(NMSE_i) at k=nconf = {one_minus_mean_nmse:.6f}")
+    print(f"[pme.report] 1 - NMSE_total at k=nconf = {one_minus_mean_nmse:.6f}")
     print(f"[pme.report] sum(lambda_1..k)/ninf at k=nconf = {eig_ratio:.6f}")
     print(f"[pme.report] diff = {diff:.2e}")
+
 
     return rep

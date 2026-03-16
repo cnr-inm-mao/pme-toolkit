@@ -1,6 +1,25 @@
 # MATLAB temp
 **/*.asv
 
+# Python chace
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# Editor temp
+*.swp
+*.swo
+
 # Results
 **/results/
 

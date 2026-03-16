@@ -1,0 +1,23 @@
+Dataset: Design-Space Dimensionality Reduction Benchmark Dataset – RAE2822 Airfoil
+
+Matrix: database.mat
+Size: 410 × 16385
+
+Row blocks:
+
+1–129        x coordinates of airfoil geometry
+130–258      y coordinates of airfoil geometry
+
+259–278      normalized design variables (20) in [0,1]
+
+279–407      pressure coefficient Cp (129 points)
+
+408          Lift coefficient Cl
+409          Drag coefficient Cd
+410          Pitching moment coefficient Cm
+
+
+Columns:
+
+1            baseline configuration
+2–16385      Sobol sampled configurations

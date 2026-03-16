@@ -13,6 +13,7 @@ from .io import load_mat_database, load_mat_range
 from .model import fit_pme
 from .plotting import save_all_plots
 from .report import build_report, print_report
+from .datasets import ensure_case_inputs
 
 
 def _json_default(obj: Any) -> Any:
@@ -111,34 +112,6 @@ def _save_manifest(
     return path
 
 
-def _print_dataset_status(cfg: dict[str, Any]) -> None:
-    """
-    Minimal MATLAB-like dataset status message.
-
-    This does not yet implement download/unzip logic like ensure_case_inputs.m;
-    it only reports that required inputs are already present when paths resolve.
-    """
-    io_cfg = dict(cfg.get("io", {}) or {})
-    vars_cfg = dict(cfg.get("vars", {}) or {})
-
-    dbfile = io_cfg.get("dbfile")
-    urange_file = vars_cfg.get("Urange_file")
-
-    ok_db = bool(dbfile) and Path(dbfile).is_file()
-    ok_urange = (urange_file is None or urange_file == "" or Path(urange_file).is_file())
-
-    if ok_db and ok_urange:
-        print("[dataset] all required inputs already available.")
-    else:
-        missing = []
-        if not ok_db:
-            missing.append("dbfile")
-        if not ok_urange:
-            missing.append("Urange_file")
-        missing_txt = ", ".join(missing) if missing else "unknown"
-        raise FileNotFoundError(f"[dataset] missing required inputs: {missing_txt}")
-
-
 def run_case(
     case_json: str | Path,
     *,
@@ -163,7 +136,7 @@ def run_case(
     case_path = Path(case_json).expanduser().resolve()
     cfg, base_dir = load_case_json(case_path)
 
-    _print_dataset_status(cfg)
+    dataset_meta = ensure_case_inputs(cfg, base_dir)
 
     io_cfg = dict(cfg.get("io", {}) or {})
     vars_cfg = dict(cfg.get("vars", {}) or {})
@@ -228,10 +201,11 @@ def run_case(
 
     return {
         "cfg": cfg,
+        "layout": layout,
+        "meta": dataset_meta,
         "case_json": str(case_path),
         "DB": db,
         "DB_used": db_used,
-        "layout": layout,
         "model": model,
         "report": report,
         "outdir": str(outdir),
