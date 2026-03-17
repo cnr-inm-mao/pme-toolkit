@@ -9,6 +9,8 @@
 [![Docs](https://img.shields.io/badge/docs-online-blue)](https://cnr-inm-mao.github.io/pme-toolkit/)
 [![Docs build](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/docs-pages.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/docs-pages.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18962859.svg)](https://doi.org/10.5281/zenodo.18962859)
+[![PyPI](https://img.shields.io/pypi/v/pme-toolkit?logo=pypi&logoColor=white)](https://pypi.org/project/pme-toolkit/)
+[![Python](https://img.shields.io/pypi/pyversions/pme-toolkit?logo=python&logoColor=white)](https://pypi.org/project/pme-toolkit/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![MATLAB tests](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/matlab-tests.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/matlab-tests.yml)
 [![Python tests](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/python-tests.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/python-tests.yml)
@@ -150,17 +152,21 @@ Build locally with:
 
 ### Python
 
-Local installation:
-
-    pip install -e python/
-
-PyPI (planned):
+Install from PyPI:
 
     pip install pme-toolkit
+
+For development (editable install from repository):
+
+    pip install -e python/
 
 ### MATLAB
 
 No installation required.
+
+Add the repository root (or `matlab/src`) to your MATLAB path, e.g.:
+
+    addpath(genpath('matlab/src'))
 
 ---
 
