@@ -1,6 +1,10 @@
 <p align="center">
   <a href="https://cnr-inm-mao.github.io/pme-toolkit/">
-    <img src="docs/assets/logos/logo-hori.png" width="300">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/logo-hori-nobg.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/assets/logos/logo-hori.png">
+      <img src="docs/assets/logos/logo-hori.png" width="300">
+    </picture>
   </a>
 </p>
 
