@@ -4,22 +4,62 @@
   </a>
 </p>
 
-# 
+# PME-toolkit
 
-PME-toolkit is an open-source repository for **design-space dimensionality reduction in parametric shape optimization** based on **Parametric Model Embedding (PME)** and its physics-aware variants.
+PME-toolkit is an open-source framework for **design-space dimensionality reduction in parametric shape optimization** based on **Parametric Model Embedding (PME)** and its physics-aware extensions (**PI-PME**, **PD-PME**).
+
+It provides a **reproducible, benchmark-driven workflow** with dual **Python/MATLAB implementations**, enabling consistent analysis, validation, and integration within simulation-based design optimization pipelines.
+
+---
 
 ## What is in the repository
 
 - a MATLAB reference implementation;
-- a Python scaffold for the future port;
+- a **fully functional Python package (available on PyPI)**;
 - benchmark definitions;
 - dataset metadata;
 - local tests;
-- a JOSS paper draft.
+- a JOSS software paper submission.
+
+---
+
+## Installation
+
+### Python
+
+    pip install pme-toolkit
+
+### MATLAB
+
+    addpath(genpath("matlab/src"));
+
+---
+
+## Quick example
+
+### Python
+
+    pme-run tests/cases/test_glider.json
+    pme-back tests/cases/test_glider_back.json
+
+### MATLAB
+
+    run_pme("tests/cases/test_glider.json")
+    run_back("tests/cases/test_glider_back.json")
+
+---
 
 ## Current status
 
-At this stage, the **MATLAB implementation is the reference implementation** of the repository.
-The Python side currently provides configuration-handling infrastructure and minimal tests, but it is not yet a full port of the MATLAB workflow.
+PME-toolkit v1.2 is a **public released package**:
 
-Use the navigation menu to access quickstart instructions, configuration details, APIs, reproducibility notes, benchmark notes, dataset notes, and backmapping documentation.
+- available on PyPI
+- archived on Zenodo
+- submitted to JOSS
+
+- Python implementation: fully functional and recommended for use  
+- MATLAB implementation: maintained as reference for validation  
+
+---
+
+Use the navigation menu to access detailed documentation on configuration, APIs, benchmarks, datasets, reproducibility, and backmapping.

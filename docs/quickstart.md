@@ -1,41 +1,34 @@
 # Quickstart
 
-## MATLAB
+## Python (recommended)
 
-The most reliable self-contained run in the repository is the tiny glider test case shipped under `tests/`.
+Install from PyPI:
 
-```matlab
-addpath(genpath("matlab/src"));
-out = pme.run_case("tests/cases/test_glider.json");
-```
+    pip install pme-toolkit
 
-For standalone backmapping:
+Run PME on the reference case:
 
-```matlab
-addpath(genpath("matlab/src"));
-out = pme.backmapping("tests/cases/test_glider_back.json", "x01", [0.1; 0.7; 0.3; 0.9; 0.2]);
-```
+    pme-run tests/cases/test_glider.json
 
-You can also use the root-level wrappers for benchmark-style runs:
+Run backmapping:
 
-```matlab
-run_pme("benchmarks/standard/pme/glider/case.json");
-run_back("benchmarks/standard/pme/glider/backmapping.json");
-```
+    pme-back tests/cases/test_glider_back.json
 
-## Python
+---
 
-At this repository stage, the Python package only provides a minimal scaffold and configuration-loader test:
+## MATLAB (reference implementation)
 
-```bash
-cd python
-PYTHONPATH=src pytest -q
-```
+    addpath(genpath("matlab/src"));
+    out = pme.run_case("tests/cases/test_glider.json");
 
-## Documentation
+Backmapping:
 
-Build the documentation site locally with:
+    out = pme.backmapping("tests/cases/test_glider_back.json", "x01", [0.1; 0.7; 0.3; 0.9; 0.2]);
 
-```bash
-mkdocs serve
-```
+---
+
+## Notes
+
+The tiny glider dataset under `tests/data/` provides a fully self-contained example for validation.
+
+For full benchmark workflows, see the Benchmarks and Datasets sections.

@@ -11,12 +11,9 @@ Run the MATLAB tests with:
 run("tests/run_tests.m")
 ```
 
-Run the Python configuration-loader test with:
+Run Python tests with:
 
-```bash
-cd python
-PYTHONPATH=src pytest -q
-```
+    pytest tests/python -q
 
 ## External benchmark datasets
 
