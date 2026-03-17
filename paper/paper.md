@@ -1,45 +1,67 @@
 ---
-title: "PME-toolkit: A MATLAB/Python toolkit for design-space dimensionality reduction in parametric shape optimization"
+title: "PME-toolkit: a reproducible framework for design-space dimensionality reduction in parametric shape optimization"
 tags:
-  - MATLAB
-  - Python
-  - shape optimization
   - dimensionality reduction
-  - parametric model embedding
-  - surrogate-based design optimization
+  - shape optimization
+  - surrogate modeling
+  - design optimization
 authors:
   - name: Andrea Serani
-    orcid: 0000-0002-9429-1392
-    affiliation: 1
-  - name: Marco Diez
     affiliation: 1
 affiliations:
-  - name: CNR-INM, National Research Council of Italy, Institute of Marine Engineering
+  - name: CNR-INM, National Research Council-Institute of Marine Engineering, Rome, Italy
     index: 1
-date: 11 March 2026
+date: 2026
 bibliography: paper.bib
 ---
 
 # Summary
 
-PME-toolkit is a software repository for **design-space dimensionality reduction in parametric shape optimization** based on **Parametric Model Embedding (PME)** and its physics-aware variants.
+PME-toolkit is an open-source framework for design-space dimensionality reduction in parametric shape optimization based on Parametric Model Embedding (PME) @Serani2023PME and its physics-aware extensions (PI-PME, PD-PME) @Serani2025EWC.
 
-The current repository provides a **MATLAB reference implementation** for the shape-optimization workflow and a **Python scaffold** for the future port.
+The software builds upon previous developments and applications of PME in aerodynamic and hydrodynamic shape optimization @SeraniAST, @Serani2024JMSE, @Gaggero2026AOR, as well as related dimensionality-reduction studies.
+
+The software provides a reproducible, benchmark-driven workflow with dual Python and MATLAB implementations, enabling consistent analysis, cross-validation, and integration within simulation-based design optimization pipelines.
 
 # Statement of need
 
-High-dimensional parametric descriptions are common in simulation-based design optimization. They make exploration, surrogate construction, and optimization progressively more expensive as the number of design variables grows. PME-based methods address this challenge by learning reduced coordinates that retain a direct link with the original parameters, enabling interpretable reduced-space optimization together with analytical backmapping.
+Simulation-Based Design Optimization (SBDO) is often limited by the curse of dimensionality @Bellman1957, which arises in high-dimensional parametric design spaces.
 
-# Current repository scope
+PME-toolkit addresses this limitation by constructing a low-dimensional embedding of the design space that preserves a direct mapping to the original variables, enabling analytical backmapping and efficient optimization in reduced coordinates.
 
-At this release stage:
+Existing dimensionality-reduction approaches in shape optimization @Serani2025Survey typically lack:
 
-- MATLAB is the reference implementation;
-- PME, PI-PME, and PD-PME are available for the current shape-optimization scope;
-- benchmark definitions are organized under `benchmarks/`;
-- dataset metadata is organized under `databases/`;
-- a tiny bundled test case is provided under `tests/` for self-contained validation.
+* a direct link to the original design variables,
+* reproducibility across implementations,
+* or integration within engineering workflows.
+
+PME-toolkit fills this gap by providing:
+
+* a unified implementation of PME, PI-PME, and PD-PME,
+* a JSON-driven workflow for reproducibility,
+* cross-language validation between Python and MATLAB,
+* benchmark-ready configurations for representative shape optimization problems.
+
+PME-toolkit establishes a reproducible and extensible foundation for integrating design-space dimensionality reduction methods within modern SBDO pipelines.
+
+# Key features
+
+* Dual Python/MATLAB implementation with cross-language validation
+* Implementation of PME, PI-PME, and PD-PME
+* Analytical backmapping to original parametric variables
+* JSON-based reproducible workflows
+* Benchmark configurations for glider and airfoil cases
+* Cross-language regression testing
+
+# Availability
+
+* Source code: https://github.com/cnr-inm-mao/pme-toolkit
+* Documentation: https://cnr-inm-mao.github.io/pme-toolkit/
+* PyPI package: https://pypi.org/project/pme-toolkit/
+* DOI: https://doi.org/10.5281/zenodo.18962859
 
 # Acknowledgements
 
-The authors acknowledge the research activities that motivated the development of PME and its physics-aware extensions.
+The author acknowledges the support of the Italian Ministry of University and Research (MUR) through the PRIN 2022 program, project BIODRONES (20227JNM52, CUP B53D230055600), and the National Recovery and Resilience Plan (PNRR), Sustainable Mobility Center (CNMS), Spoke 3 Waterways (CN00000023, CUP B43C22000440001).
+
+This work was also conducted within the NATO AVT-404 Research Task Group on “Enhanced Design Processes of Military Vehicles through Machine Learning Methods.”
