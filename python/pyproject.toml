@@ -9,9 +9,21 @@ description = "Python implementation of PME-toolkit with PME, PI-PME, and PD-PME
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-  { name = "Andrea Serani" }
+  { name = "Andrea Serani", email = "andrea.serani@cnr.it" }
 ]
 license = { text = "MIT" }
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
 dependencies = [
   "numpy>=1.24",
   "scipy>=1.10",
@@ -26,6 +38,12 @@ dev = [
 [project.scripts]
 pme-run = "pme_toolkit.run_case:main"
 pme-back = "pme_toolkit.run_back:main"
+
+[project.urls]
+Homepage = "https://cnr-inm-mao.github.io/pme-toolkit/"
+Documentation = "https://cnr-inm-mao.github.io/pme-toolkit/"
+Repository = "https://github.com/cnr-inm-mao/pme-toolkit"
+Issues = "https://github.com/cnr-inm-mao/pme-toolkit/issues"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

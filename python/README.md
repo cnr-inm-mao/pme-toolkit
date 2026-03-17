@@ -1,63 +1,60 @@
-# Python implementation
+# PME-toolkit (Python)
 
-This folder contains the **Python implementation** of PME-toolkit.
+Python implementation of **PME-toolkit** for **design-space dimensionality reduction** in parametric shape optimization.
 
-## Scope
+Supports:
 
-The Python package supports the repository workflow for:
-
-- **PME**
-- **PI-PME**
-- **PD-PME**
-- analytical **backmapping** to the original parametric variables
-
-within the current **shape-optimization** scope of the project.
-
-The implementation is fully integrated in the **JSON-driven workflow** used across the repository.
+* **PME (Parametric Model Embedding)**
+* **PI-PME (Physics-Informed PME)**
+* **PD-PME (Physics-Driven PME)**
+* analytical **backmapping** to original design variables
 
 ---
 
-## Role within PME-toolkit
+## Overview
 
-PME-toolkit provides a **dual MATLAB/Python implementation**.
+The Python package provides a fully functional implementation of PME-based workflows using a **JSON-driven interface** for reproducible studies.
 
-The Python code:
-
-- supports the same **methods (PME, PI-PME, PD-PME)** as MATLAB  
-- uses the same **JSON configuration format**  
-- is validated against MATLAB through **cross-language regression tests**  
-- provides a command-line interface for reproducible execution  
+It is aligned with the MATLAB implementation and validated through **cross-language regression tests**.
 
 ---
 
 ## Installation
 
-From the repository root:
+### From PyPI
 
-    pip install -e python/
+```
+pip install pme-toolkit
+```
 
-This installs the package in editable mode and exposes the CLI entry points.
+### From source (development mode)
+
+```
+pip install -e python/
+```
 
 ---
 
 ## Command-line interface
 
-The Python implementation provides CLI tools aligned with the repository workflow.
-
 Run a PME case:
 
-    pme-run tests/cases/test_glider.json
+```
+pme-run tests/cases/test_glider.json
+```
 
 Run backmapping:
 
-    pme-back tests/cases/test_glider_back.json
+```
+pme-back tests/cases/test_glider_back.json
+```
 
-These commands:
+The CLI:
 
-- parse the JSON configuration  
-- run the full PME workflow  
-- write outputs to the specified `outdir`  
-- ensure compatibility with MATLAB-generated results  
+* parses the JSON configuration
+* executes the PME workflow
+* writes outputs to the specified `outdir`
+* ensures consistency with MATLAB results
 
 ---
 
@@ -65,57 +62,60 @@ These commands:
 
 Example:
 
-    from pme_toolkit.model import fit_from_case
+```
+from pme_toolkit.model import fit_from_case
 
-    model = fit_from_case("tests/cases/test_glider.json")
+model = fit_from_case("tests/cases/test_glider.json")
 
-    print(model.nconf)
-    print(model.alpha_train.shape)
+print(model.nconf)
+print(model.alpha_train.shape)
+```
 
 ---
 
-## Outputs
+## Repository integration
 
-Running a PME case generates:
+The Python implementation is part of the full PME-toolkit repository:
 
-- model data (Python structures and/or saved files)
-- reduced coordinates
-- quantities needed for backmapping
-- outputs written to the `outdir` specified in the JSON case
+* shared **JSON configuration format**
+* shared **datasets**
+* shared **benchmark definitions**
+* validated against MATLAB through **regression testing**
 
 ---
 
 ## Testing
 
-From the repository root:
+From repository root:
 
-    pytest tests/python -q
+```
+pytest tests/python -q
+```
 
-The test suite includes:
+Test suite covers:
 
-- configuration loading
-- PME execution
-- backmapping
-- regression tests against MATLAB reference results
+* configuration loading
+* PME workflows
+* backmapping
+* regression against MATLAB reference
 
 ---
 
 ## Datasets
 
-The Python implementation uses the same datasets as the MATLAB side.
+* lightweight test dataset:
 
-- lightweight test dataset:
+  tests/data/
 
-    tests/data/
+* benchmark datasets:
 
-- benchmark datasets:
-
-    databases/
+  databases/
 
 ---
 
 ## Status
 
-The Python implementation is **fully functional** for PME, PI-PME, and PD-PME within the current repository scope.
+The Python implementation is **fully functional** for PME, PI-PME, and PD-PME within the current scope.
 
-It is actively maintained in alignment with the MATLAB implementation and validated through cross-language regression tests.
+It is actively maintained and serves as a **production-ready interface** for reproducible PME workflows.
+
