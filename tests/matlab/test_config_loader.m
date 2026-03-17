@@ -5,9 +5,8 @@ disp("Running config loader test")
 this_file = mfilename('fullpath');
 matlab_tests_dir = fileparts(this_file);
 tests_root = fileparts(matlab_tests_dir);
-repo_root = fileparts(tests_root);
 
-cfg_path = fullfile(repo_root, "benchmarks", "standard", "pme", "glider", "case.json");
+cfg_path = fullfile(tests_root, "cases", "test_glider.json");
 
 cfg = pme.read_case_json(string(cfg_path));
 
