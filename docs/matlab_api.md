@@ -1,32 +1,62 @@
 # MATLAB API
 
-The MATLAB implementation is the current reference implementation of PME-toolkit.
+The MATLAB implementation provides a reference interface for PME-toolkit workflows.
 
-## Main usage pattern
+---
 
-Add the package to the MATLAB path:
+## Setup
 
-```matlab
-addpath(genpath("matlab/src"));
-```
+Add the source folder to the MATLAB path:
 
-Then run a case through the package entry points, for example:
+    addpath(genpath("matlab/src"));
 
-```matlab
-out = pme.run_case("tests/cases/test_glider.json");
-```
+---
 
-or perform backmapping directly:
+## Running a case
 
-```matlab
-out = pme.backmapping("tests/cases/test_glider_back.json", "x01", [0.1; 0.7; 0.3; 0.9; 0.2]);
-```
+A dimensionality reduction workflow can be executed from a JSON configuration file:
+
+    out = pme.run_case("tests/cases/test_glider.json");
+
+---
+
+## Backmapping
+
+Backmapping can be performed using a dedicated configuration:
+
+    out = pme.backmapping("tests/cases/test_glider_back.json");
+
+---
+
+## Output
+
+The returned structure `out` typically includes:
+
+- reduced coordinates  
+- variance information  
+- reconstruction metrics  
+- model data  
+
+Exact contents depend on the configuration.
+
+---
 
 ## Wrappers
 
-Repository-root wrappers are also available:
+Repository-level wrappers are available:
 
 - `run_pme.m`
 - `run_back.m`
 
-These wrap the JSON-driven workflow used in the benchmark folders.
+These provide a simplified interface to the same JSON-driven workflow:
+
+    run_pme("tests/cases/test_glider.json")
+    run_back("tests/cases/test_glider_back.json")
+
+---
+
+## Notes
+
+- MATLAB and Python implementations follow the same configuration structure  
+- JSON files define the full workflow  
+- MATLAB is useful for validation and comparison with the reference implementation  

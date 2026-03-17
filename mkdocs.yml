@@ -10,16 +10,28 @@ theme:
   logo: assets/logos/logo-wave-white-nobg.png
   favicon: assets/logos/logo-wave-nobg.png
   
-
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
-  - Configuration spec: config_spec.md
-  - MATLAB API: matlab_api.md
-  - Python API: python_api.md
+
+  - Core concepts:
+      - Workflow: workflow.md
+      - Input data: input_data.md
+      - Configuration: config_spec.md
+
+  - Execution:
+      - Benchmarks: benchmarks.md
+      - Datasets: datasets.md
+      - Reproducibility: reproducibility.md
+
+  - Backmapping:
+      - Overview: backmapping.md
+      - Configuration: backmapping_config.md
+
   - Visualization: visualization.md
-  - Backmapping: backmapping.md
-  - Benchmarks: benchmarks.md
-  - Datasets: datasets.md
-  - Reproducibility: reproducibility.md
+
+  - API:
+      - Python API: python_api.md
+      - MATLAB API: matlab_api.md
+
   - Citation: citation.md
