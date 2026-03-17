@@ -13,5 +13,5 @@ repository-code: https://github.com/cnr-inm-mao/pme-toolkit
 url: https://cnr-inm-mao.github.io/pme-toolkit
 license: MIT
 
-version: 1.0.2
-date-released: 2026-03-12
+version: 1.2.0
+date-released: 2026-03-17
