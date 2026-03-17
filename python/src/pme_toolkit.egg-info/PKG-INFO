@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: pme-toolkit
 Version: 1.2.0
-Summary: Python implementation scaffold and core PME workflow for PME-toolkit
+Summary: Python implementation of PME-toolkit with PME, PI-PME, and PD-PME workflows
 Author: Andrea Serani
 License: MIT
 Requires-Python: >=3.10

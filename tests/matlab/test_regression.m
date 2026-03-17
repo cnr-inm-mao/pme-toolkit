@@ -4,8 +4,10 @@ disp("Running regression test")
 
 this_file = mfilename('fullpath');
 matlab_tests_dir = fileparts(this_file);
+tests_root = fileparts(matlab_tests_dir);
 
-report_file = fullfile(matlab_tests_dir, "results", "report.mat");
+report_file = fullfile(tests_root, "cases", "results", "report.mat");
+
 assert(isfile(report_file), "Missing report file: %s", report_file)
 
 S = load(report_file);

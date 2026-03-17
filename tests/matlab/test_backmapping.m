@@ -7,7 +7,7 @@ matlab_tests_dir = fileparts(this_file);
 tests_root = fileparts(matlab_tests_dir);
 
 casefile = fullfile(tests_root, "cases", "test_glider_back.json");
-results_dir = fullfile(matlab_tests_dir, "results");
+results_dir = fullfile(tests_root, "cases", "results");
 model_file = fullfile(results_dir, "model.mat");
 output_file = fullfile(results_dir, "u_base.txt");
 

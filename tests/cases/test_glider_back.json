@@ -1,5 +1,9 @@
 {
   "case_json": "test_glider.json",
+  "input": {
+    "file": "x01.txt",
+    "format": "txt"
+  },
   "reduced_space": {
     "nconf": 5
   },
@@ -8,7 +12,7 @@
     "c": 3.0
   },
   "output": {
-    "file": "../results/u_base.txt",
+    "file": "results/u_base.txt",
     "format": "txt",
     "layout": "col",
     "what": "Ubase",

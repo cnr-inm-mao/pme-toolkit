@@ -7,7 +7,7 @@ matlab_tests_dir = fileparts(this_file);
 tests_root = fileparts(matlab_tests_dir);
 
 casefile = fullfile(tests_root, "cases", "test_glider.json");
-results_dir = fullfile(matlab_tests_dir, "results");
+results_dir = fullfile(tests_root, "cases", "results");
 
 if ~isfolder(results_dir)
     mkdir(results_dir);

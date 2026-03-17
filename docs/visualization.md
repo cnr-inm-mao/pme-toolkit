@@ -113,19 +113,18 @@ It helps interpret the reduced coordinates and identify which original variables
 The geometric interpretation of the reduced coordinates can be visualized through modal perturbations of the baseline geometry.
 
 <p align="center">
-  <img src="../images/mode_01.png" width="48%">
-  <img src="../images/mode_02.png" width="48%">
+  <img src="../images/mode_01.png" width="100%">
 </p>
 
-<p align="center"><em>First two geometric modes of the PME embedding.</em></p>
+<p align="center"><em>Example of first geometric mode of the PME embedding for the airfoil benchmark.</em></p>
 
-In these figures:
+In these figure:
 
 - the black curve represents the baseline configuration
 - the blue curve represents the positive perturbation along the mode
 - the red curve represents the negative perturbation
 
-These visualizations provide an intuitive interpretation of how each reduced coordinate modifies the original geometry.
+This visualization provide an intuitive interpretation of how each reduced coordinate modifies the original geometry.
 
 ---
 

@@ -1,11 +1,8 @@
-"""PME-toolkit Python package.
+"""
+PME-toolkit Python package.
 
-This package provides the Python-side implementation of the PME workflow.
-
-Current status:
-- PME core: implemented in a first stable offline form
-- PI-PME: TODO
-- PD-PME: TODO
+This package provides the Python implementation of the PME-toolkit
+workflow, including PME, PI-PME, and PD-PME utilities.
 
 The MATLAB implementation remains the project reference implementation.
 """
@@ -13,7 +10,7 @@ The MATLAB implementation remains the project reference implementation.
 from .config_loader import load_case_json, load_config
 from .layout import parse_layout
 from .io import load_mat_database, load_mat_range
-from .model import PmeModel, fit_from_case, fit_pme
+from .model import PmeModel, fit_from_case, fit_model, fit_pme
 from .report import build_report, print_report
 from .plotting import (
     plot_scree_plot,
@@ -27,7 +24,6 @@ from .plotting import (
 )
 from .filters import apply_filters, FilterResult
 from .weights import build_weights, build_wf, build_wc
-from .model import PmeModel, fit_from_case, fit_model, fit_pme
 from .datasets import ensure_case_inputs
 
 __all__ = [

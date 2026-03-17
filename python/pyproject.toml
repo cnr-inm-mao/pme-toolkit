@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pme-toolkit"
 version = "1.2.0"
-description = "Python implementation scaffold and core PME workflow for PME-toolkit"
+description = "Python implementation of PME-toolkit with PME, PI-PME, and PD-PME workflows"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -22,6 +22,10 @@ dependencies = [
 dev = [
   "pytest>=7.4",
 ]
+
+[project.scripts]
+pme-run = "pme_toolkit.run_case:main"
+pme-back = "pme_toolkit.run_back:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

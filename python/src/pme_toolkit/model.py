@@ -14,6 +14,7 @@ from .io import load_mat_database, load_mat_range
 from .layout import parse_layout
 from .weights import build_weights
 
+import json
 
 Array = NDArray[np.float64]
 
@@ -136,6 +137,7 @@ def _prepare_vars(
             "Urange": None,
             "Urange_full": None,
             "Urange_source": urange_source,
+            "Ubase_baseline_raw": np.asarray(ubase[:, 0], dtype=float),
         }
 
     urange_full = np.asarray(urange_full, dtype=float)
@@ -178,6 +180,7 @@ def _prepare_vars(
         "Urange_source": urange_source,
         "min_after_clip": float(np.min(uact)),
         "max_after_clip": float(np.max(uact)),
+        "Ubase_baseline_raw": np.asarray(ubase[:, 0], dtype=float),
     }
 
 
@@ -310,6 +313,30 @@ def _weighted_fit(
         "ak_full": ak_full,
     }
 
+def _jsonify_layout(obj):
+    if isinstance(obj, slice):
+        return {
+            "__type__": "slice",
+            "start": obj.start,
+            "stop": obj.stop,
+            "step": obj.step,
+        }
+    if isinstance(obj, dict):
+        return {k: _jsonify_layout(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_jsonify_layout(v) for v in obj]
+    return obj
+
+
+def _dejsonify_layout(obj):
+    if isinstance(obj, dict):
+        if obj.get("__type__") == "slice":
+            return slice(obj.get("start"), obj.get("stop"), obj.get("step"))
+        return {k: _dejsonify_layout(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_dejsonify_layout(v) for v in obj]
+    return obj
+
 
 @dataclass
 class PmeModel:
@@ -388,9 +415,81 @@ class PmeModel:
 
         uact_raw = umin[None, :] + uact * denom[None, :]
 
-        out = np.zeros((uact_raw.shape[0], mbase), dtype=float)
+        ubase0 = self.uinfo.get("Ubase_baseline_raw")
+        if ubase0 is None:
+            raise RuntimeError("Cannot reconstruct full variables without Ubase_baseline_raw")
+
+        ubase0 = np.asarray(ubase0, dtype=float).reshape(1, -1)
+        if ubase0.shape[1] != mbase:
+            raise RuntimeError("Ubase_baseline_raw has wrong length")
+
+        out = np.repeat(ubase0, uact_raw.shape[0], axis=0)
         out[:, idx_active] = uact_raw
         return out
+
+    def save(self, path: str | Path) -> None:
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        np.savez_compressed(
+            path,
+            mode=self.mode,
+            cfg_json=json.dumps(self.cfg),
+            layout_json=json.dumps(_jsonify_layout(self.layout)),
+            p0=self.p0,
+            delta_m=self.delta_m,
+            pc=self.pc,
+            w=self.w,
+            z_reduced=self.z_reduced,
+            eigvals_reduced=self.eigvals_reduced,
+            eigvals_full=self.eigvals_full,
+            z_full=self.z_full,
+            alpha_train=self.alpha_train,
+            ak_full=self.ak_full,
+            uinfo_json=json.dumps({
+                k: (v.tolist() if isinstance(v, np.ndarray) else v)
+                for k, v in self.uinfo.items()
+            }),
+            nconf=np.asarray([self.nconf], dtype=int),
+            baseline_col=np.asarray([self.baseline_col], dtype=int),
+            db_used_shape=np.asarray(self.db_used_shape, dtype=int),
+            filter_mask=self.filter_mask.astype(bool),
+            filter_info_json=json.dumps(self.filter_info),
+            stats_w_json=json.dumps(self.stats_w),
+        )
+
+    @classmethod
+    def load(cls, path: str | Path) -> "PmeModel":
+        path = Path(path)
+        data = np.load(path, allow_pickle=False)
+
+        uinfo = json.loads(str(data["uinfo_json"]))
+        for key in ("idx_active", "idx_fixed", "Urange", "Urange_full", "Ubase_baseline_raw"):
+            if key in uinfo and uinfo[key] is not None:
+                uinfo[key] = np.asarray(uinfo[key], dtype=float if "Urange" in key or "Ubase" in key else int)
+
+        return cls(
+            mode=str(data["mode"]),
+            cfg=json.loads(str(data["cfg_json"])),
+            layout=_dejsonify_layout(json.loads(str(data["layout_json"]))),
+            p0=np.asarray(data["p0"], dtype=float),
+            delta_m=np.asarray(data["delta_m"], dtype=float),
+            pc=np.asarray(data["pc"], dtype=float),
+            w=np.asarray(data["w"], dtype=float),
+            z_reduced=np.asarray(data["z_reduced"], dtype=float),
+            eigvals_reduced=np.asarray(data["eigvals_reduced"], dtype=float),
+            eigvals_full=np.asarray(data["eigvals_full"], dtype=float),
+            z_full=np.asarray(data["z_full"], dtype=float),
+            alpha_train=np.asarray(data["alpha_train"], dtype=float),
+            ak_full=np.asarray(data["ak_full"], dtype=float),
+            uinfo=uinfo,
+            nconf=int(np.asarray(data["nconf"]).reshape(-1)[0]),
+            baseline_col=int(np.asarray(data["baseline_col"]).reshape(-1)[0]),
+            db_used_shape=tuple(np.asarray(data["db_used_shape"], dtype=int).tolist()),
+            filter_mask=np.asarray(data["filter_mask"], dtype=bool),
+            filter_info=json.loads(str(data["filter_info_json"])),
+            stats_w=json.loads(str(data["stats_w_json"])),
+        )
 
 
 def fit_model(

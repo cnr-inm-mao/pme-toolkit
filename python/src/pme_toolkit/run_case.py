@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+from scipy.io import savemat
 
 import numpy as np
 
@@ -14,19 +15,6 @@ from .model import fit_pme
 from .plotting import save_all_plots
 from .report import build_report, print_report
 from .datasets import ensure_case_inputs
-
-
-def _json_default(obj: Any) -> Any:
-    """JSON serializer helper for numpy/path objects."""
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    if isinstance(obj, (np.floating,)):
-        return float(obj)
-    if isinstance(obj, (np.integer,)):
-        return int(obj)
-    if isinstance(obj, Path):
-        return str(obj)
-    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
 def _resolve_outdir(cfg: dict[str, Any], base_dir: Path, outdir_override: str | Path | None = None) -> Path:
@@ -48,68 +36,6 @@ def _resolve_outdir(cfg: dict[str, Any], base_dir: Path, outdir_override: str | 
         return Path(outdir).expanduser().resolve()
 
     return (base_dir / "results_py").resolve()
-
-
-def _save_report_json(report: dict[str, Any], outdir: Path) -> Path:
-    path = outdir / "report.json"
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2, default=_json_default)
-    return path
-
-
-def _save_results_npz(model: Any, report: dict[str, Any], outdir: Path) -> Path:
-    """Save compact numerical results in NPZ form."""
-    path = outdir / "pme_results.npz"
-
-    np.savez_compressed(
-        path,
-        eigvals_full=np.asarray(model.eigvals_full, dtype=float),
-        eigvals_reduced=np.asarray(model.eigvals_reduced, dtype=float),
-        z_full=np.asarray(model.z_full, dtype=float),
-        z_reduced=np.asarray(model.z_reduced, dtype=float),
-        alpha_train=np.asarray(model.alpha_train, dtype=float),
-        p0=np.asarray(model.p0, dtype=float),
-        delta_m=np.asarray(model.delta_m, dtype=float),
-        pc=np.asarray(model.pc, dtype=float),
-        w=np.asarray(model.w, dtype=float),
-        filter_mask=np.asarray(model.filter_mask, dtype=bool),
-        nmse_geom_by_k=np.asarray(report["nmse"].get("geom_by_k", []), dtype=float),
-        nconf=np.asarray([model.nconf], dtype=int),
-        mact=np.asarray([model.uinfo["Mact"]], dtype=int),
-        db_used_rows=np.asarray([model.db_used_shape[0]], dtype=int),
-        db_used_cols=np.asarray([model.db_used_shape[1]], dtype=int),
-    )
-    return path
-
-
-def _save_manifest(
-    case_json: Path,
-    cfg: dict[str, Any],
-    outdir: Path,
-    report_path: Path,
-    npz_path: Path,
-) -> Path:
-    manifest = {
-        "case_json": str(case_json),
-        "mode": cfg.get("mode"),
-        "outdir": str(outdir),
-        "artifacts": {
-            "report_json": str(report_path),
-            "results_npz": str(npz_path),
-            "plots": [
-                str(outdir / "scree_plot.png"),
-                str(outdir / "variance_retained.png"),
-                str(outdir / "nmse_by_source.png"),
-                str(outdir / "variance_by_source.png"),
-                str(outdir / "variable_modes_normalized.png"),
-            ],
-        },
-    }
-
-    path = outdir / "manifest.json"
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(manifest, f, indent=2)
-    return path
 
 
 def run_case(
@@ -180,24 +106,26 @@ def run_case(
     if save_plots:
         save_all_plots(model, outdir=outdir, n_modes=n_modes_plot)
 
-    report_path = _save_report_json(report, outdir)
-    npz_path = _save_results_npz(model, report, outdir)
-    manifest_path = _save_manifest(case_path, cfg, outdir, report_path, npz_path)
+    report_path = outdir / "report.mat"
+    model_path = outdir / "model.npz"
+
+    savemat(report_path, {"report": report})
+    model.save(model_path)
 
     saved = {
-        "report_json": str(report_path),
-        "results_npz": str(npz_path),
-        "manifest_json": str(manifest_path),
+        "report_mat": str(report_path),
+        "model_npz": str(model_path),
     }
 
     print()
     print(f"[run_case.py] output directory: {outdir}")
     print(f"[run_case.py] saved report:     {report_path.name}")
-    print(f"[run_case.py] saved results:    {npz_path.name}")
+    print(f"[run_case.py] saved model:      {model_path.name}")
     if save_plots:
         print("[run_case.py] saved plots:      scree_plot.png, variance_retained.png, "
               "nmse_by_source.png, variance_by_source.png, "
               "variable_modes_normalized.png, mode_XX.png")
+
 
     return {
         "cfg": cfg,
