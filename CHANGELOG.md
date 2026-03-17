@@ -11,11 +11,11 @@ and semantic versioning principles.
 
 ### Planned
 
-- Documentation refinement for the public `v1.2.x` release
-- README alignment across top-level, MATLAB, Python, benchmarks, and datasets
-- Additional regression-style validation between MATLAB and Python outputs
-- Further packaging and release cleanup for JOSS readiness
-- Expanded benchmark coverage and dataset publication workflow
+- Synchronize website pages and docs text with the actual dual MATLAB/Python status of the repository
+- Extend cross-language regression coverage beyond the tiny glider case
+- Broaden benchmark/test coverage for PME, PI-PME, and PD-PME cases
+- Further refine JOSS-facing documentation and review readiness material
+- Consolidate packaging, release, and citation workflows after the first PyPI/JOSS cycle
 
 ---
 
@@ -23,7 +23,8 @@ and semantic versioning principles.
 
 ### Added
 
-- Functional Python implementation of the PME-toolkit workflow for:
+- First public **dual MATLAB/Python workflow release** of PME-toolkit
+- Functional Python implementation for:
   - `PME`
   - `PI-PME`
   - `PD-PME`
@@ -34,20 +35,17 @@ and semantic versioning principles.
   - `pme_toolkit.run_back`
   - console entry point `pme-back`
 - Python model persistence through `model.npz`
-- Python standalone backmapping metadata output with schema:
-  - `pme.backmapping.v1`
-- Python support for reduced-space input `x01`:
-  - override from command line
-  - input from file
-  - `txt` and `csv` formats
-  - row/column vector handling
-- Python tests for:
+- Python standalone backmapping metadata output with schema `pme.backmapping.v1`
+- Python support for reduced-space input `x01` from command line and file (`txt`, `csv`, row/column vector handling)
+- Python tests covering:
   - configuration loading
   - core PME fitting on the tiny glider dataset
   - repository-style `run_case` workflow
   - standalone backmapping workflow
-- Alignment of MATLAB and Python test workflows to a common results directory:
-  - `tests/cases/results`
+- Alignment of MATLAB and Python test workflows to a shared results directory: `tests/cases/results`
+- PyPI packaging metadata and console-script exposure through `pyproject.toml`
+- Public PyPI distribution of the package
+- Zenodo-linked public software release for version `v1.2`
 
 ### Changed
 
@@ -56,13 +54,10 @@ and semantic versioning principles.
 - Python outputs simplified to save only:
   - `report.mat`
   - `model.npz`
-  instead of Python-specific extra artifacts
-- Python backmapping redesigned to behave as a standalone workflow:
-  - it now reads a previously saved model
-  - it no longer refits PME during backmapping
+- Python backmapping redesigned as a standalone workflow reading a previously saved model instead of refitting PME
 - Python reconstruction of full design variables aligned with MATLAB logic by reinserting active variables into the raw baseline parameter vector
-- MATLAB test outputs were aligned with Python test outputs so that both workflows use:
-  - `tests/cases/results`
+- MATLAB test outputs aligned with Python outputs so that both workflows use `tests/cases/results`
+- Top-level repository status updated to a real dual-language release, no longer MATLAB-only in public packaging terms
 
 ### Improved
 
@@ -70,11 +65,10 @@ and semantic versioning principles.
   - case execution
   - backmapping conventions
   - output directory structure
-  - metadata structure for backmapping results
-- Python package metadata and CLI exposure through `pyproject.toml`
-- Python package initialization and exported API cleanup
-- Consistency of local repository tests for the tiny glider case
-- Release readiness of the Python side for a dual MATLAB/Python public version
+  - metadata conventions for backmapping results
+- Release readiness of the Python side for a public versioned distribution
+- Installability and command-line usability for external users through PyPI
+- Public dissemination readiness through coordinated GitHub release, Zenodo archiving, and software-paper submission
 
 ### Fixed
 
@@ -90,23 +84,14 @@ and semantic versioning principles.
 
 ### Notes
 
-This release marks the first **dual MATLAB/Python public workflow release** of PME-toolkit.
+This release marks a major project transition:
 
-MATLAB remains the **reference implementation** for algorithm validation and numerical behaviour.
+- MATLAB remains the **reference implementation** for validation and numerical behaviour
+- Python is now a **working public implementation**, distributed on PyPI and usable through CLI entry points
+- The release is linked to Zenodo for archival/citation purposes
+- The associated JOSS paper has been submitted and is awaiting editorial triage
 
-Python now provides a working repository-style implementation of:
-- PME
-- PI-PME
-- PD-PME
-- case execution
-- standalone backmapping
-- package installation and CLI entry points
-
-Model serialization remains language-specific:
-- MATLAB saves `model.mat`
-- Python saves `model.npz`
-
-This choice preserves practical workflow parity without forcing fragile binary compatibility between the two implementations.
+A remaining post-release task is to fully synchronize all documentation pages with the new repository status, because some website text still reflects the earlier “Python scaffold” stage.
 
 ---
 
