@@ -15,9 +15,9 @@
 [![MATLAB tests](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/matlab-tests.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/matlab-tests.yml)
 [![Python tests](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/python-tests.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/python-tests.yml)
 
-PME-toolkit implements **Parametric Model Embedding (PME)** and its physics-aware extensions (**PI-PME**, **PD-PME**) for **design-space dimensionality reduction in simulation-based shape optimization**.
+PME-toolkit is an open-source framework for **design-space dimensionality reduction in parametric shape optimization** based on **Parametric Model Embedding (PME)** and its physics-aware extensions (**PI-PME**, **PD-PME**).
 
-The toolkit provides a **dual MATLAB/Python implementation**, supporting **JSON-driven reproducible workflows**, **analytical backmapping**, and **cross-language regression testing**.
+It provides a **reproducible, benchmark-driven workflow** with dual **Python/MATLAB implementations**, enabling consistent analysis, validation, and integration within simulation-based design optimization pipelines.
 
 ---
 
@@ -38,7 +38,7 @@ This makes PME particularly suited for **parametric CAD-based shape optimization
 
 ## Key features
 
-- dual **MATLAB / Python** implementation  
+- dual **Python / MATLAB** implementation  
 - support for **PME, PI-PME, and PD-PME**  
 - **JSON-driven workflows** for reproducibility  
 - **analytical backmapping** to original variables  
@@ -49,16 +49,18 @@ This makes PME particularly suited for **parametric CAD-based shape optimization
 
 ## Repository structure
 
+Core components:
+
     pme-toolkit/
-    ├── run_pme.m
-    ├── run_back.m
-    ├── matlab/
-    ├── python/
-    ├── benchmarks/
-    ├── databases/
-    ├── tests/
-    ├── docs/
-    └── paper/
+    ├── run_pme.m        # MATLAB entry point
+    ├── run_back.m       # MATLAB backmapping
+    ├── matlab/          # MATLAB implementation
+    ├── python/          # Python package
+    ├── benchmarks/      # JSON benchmark definitions
+    ├── databases/       # dataset metadata
+    ├── tests/           # MATLAB/Python tests
+    ├── docs/            # documentation (MkDocs)
+    └── paper/           # JOSS paper draft
 
 ---
 
@@ -85,10 +87,6 @@ Run PME:
 Run backmapping:
 
     pme-back tests/cases/test_glider_back.json
-
-Install locally:
-
-    pip install -e python/
 
 ---
 
@@ -167,6 +165,16 @@ No installation required.
 Add the repository root (or `matlab/src`) to your MATLAB path, e.g.:
 
     addpath(genpath('matlab/src'))
+
+---
+
+## Status
+
+PME-toolkit is actively developed and maintained.
+
+- Python implementation: fully functional and recommended for use  
+- MATLAB implementation: maintained for validation and benchmarking  
+- Cross-language consistency ensured via regression tests  
 
 ---
 
