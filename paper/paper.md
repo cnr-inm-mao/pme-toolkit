@@ -17,19 +17,19 @@ bibliography: paper.bib
 
 # Summary
 
-PME-toolkit is an open-source framework for design-space dimensionality reduction in parametric shape optimization based on Parametric Model Embedding (PME) @Serani2023PME and its physics-aware extensions (PI-PME, PD-PME) @Serani2025EWC.
+PME-toolkit is an open-source framework for design-space dimensionality reduction in parametric shape optimization based on Parametric Model Embedding (PME) [@Serani2023PME] and its physics-aware extensions (PI-PME, PD-PME) [@Serani2025EWC].
 
-The software builds upon previous developments and applications of PME in aerodynamic and hydrodynamic shape optimization @SeraniAST, @Serani2024JMSE, @Gaggero2026AOR, as well as related dimensionality-reduction studies.
+The software builds upon previous developments and applications of PME in aerodynamic and hydrodynamic shape optimization [@SeraniAST; @Serani2024JMSE; @Gaggero2026AOR], as well as related dimensionality-reduction studies.
 
 The software provides a reproducible, benchmark-driven workflow with dual Python and MATLAB implementations, enabling consistent analysis, cross-validation, and integration within simulation-based design optimization pipelines.
 
 # Statement of need
 
-Simulation-Based Design Optimization (SBDO) is often limited by the curse of dimensionality @Bellman1957, which arises in high-dimensional parametric design spaces.
+Simulation-Based Design Optimization (SBDO) is often limited by the curse of dimensionality [@Bellman1957], which arises in high-dimensional parametric design spaces.
 
 PME-toolkit addresses this limitation by constructing a low-dimensional embedding of the design space that preserves a direct mapping to the original variables, enabling analytical backmapping and efficient optimization in reduced coordinates.
 
-Existing dimensionality-reduction approaches in shape optimization @Serani2025Survey typically lack:
+Existing dimensionality-reduction approaches in shape optimization [@Serani2025Survey] typically lack:
 
 * a direct link to the original design variables,
 * reproducibility across implementations,

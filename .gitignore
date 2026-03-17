@@ -20,6 +20,10 @@ dist/
 *.swp
 *.swo
 
+# Paper
+paper/paper.pdf
+paper/jats/
+
 # Results
 **/results/
 
