@@ -11,14 +11,102 @@ and semantic versioning principles.
 
 ### Planned
 
-- Full Python implementation of PME workflow
-- Additional benchmark datasets
-- Additional validation tests
-- Extended dataset packaging and automation
-- Additional visualization utilities for:
-  - reduced coordinates
-  - geometric modes
-  - reconstruction accuracy
+- Documentation refinement for the public `v1.2.x` release
+- README alignment across top-level, MATLAB, Python, benchmarks, and datasets
+- Additional regression-style validation between MATLAB and Python outputs
+- Further packaging and release cleanup for JOSS readiness
+- Expanded benchmark coverage and dataset publication workflow
+
+---
+
+## [1.2.0] – 2026-03-17
+
+### Added
+
+- Functional Python implementation of the PME-toolkit workflow for:
+  - `PME`
+  - `PI-PME`
+  - `PD-PME`
+- Python case runner:
+  - `pme_toolkit.run_case`
+  - console entry point `pme-run`
+- Python standalone backmapping workflow:
+  - `pme_toolkit.run_back`
+  - console entry point `pme-back`
+- Python model persistence through `model.npz`
+- Python standalone backmapping metadata output with schema:
+  - `pme.backmapping.v1`
+- Python support for reduced-space input `x01`:
+  - override from command line
+  - input from file
+  - `txt` and `csv` formats
+  - row/column vector handling
+- Python tests for:
+  - configuration loading
+  - core PME fitting on the tiny glider dataset
+  - repository-style `run_case` workflow
+  - standalone backmapping workflow
+- Alignment of MATLAB and Python test workflows to a common results directory:
+  - `tests/cases/results`
+
+### Changed
+
+- Python package status moved from scaffold/infrastructure stage to a usable workflow implementation
+- Python `run_case` output logic aligned with repository-style case execution
+- Python outputs simplified to save only:
+  - `report.mat`
+  - `model.npz`
+  instead of Python-specific extra artifacts
+- Python backmapping redesigned to behave as a standalone workflow:
+  - it now reads a previously saved model
+  - it no longer refits PME during backmapping
+- Python reconstruction of full design variables aligned with MATLAB logic by reinserting active variables into the raw baseline parameter vector
+- MATLAB test outputs were aligned with Python test outputs so that both workflows use:
+  - `tests/cases/results`
+
+### Improved
+
+- Cross-language consistency between MATLAB and Python for:
+  - case execution
+  - backmapping conventions
+  - output directory structure
+  - metadata structure for backmapping results
+- Python package metadata and CLI exposure through `pyproject.toml`
+- Python package initialization and exported API cleanup
+- Consistency of local repository tests for the tiny glider case
+- Release readiness of the Python side for a dual MATLAB/Python public version
+
+### Fixed
+
+- Incorrect or outdated Python status in packaging/documentation metadata
+- Python backmapping failures caused by:
+  - missing standalone model persistence
+  - inconsistent reduced-space dimensionality handling
+  - inconsistent reinsertion of fixed variables
+  - mismatch between backmapping input schema and repository test cases
+- Python editable installation and command-line entry point issues
+- Test mismatches caused by outdated expected output filenames
+- Inconsistent MATLAB/Python test result paths
+
+### Notes
+
+This release marks the first **dual MATLAB/Python public workflow release** of PME-toolkit.
+
+MATLAB remains the **reference implementation** for algorithm validation and numerical behaviour.
+
+Python now provides a working repository-style implementation of:
+- PME
+- PI-PME
+- PD-PME
+- case execution
+- standalone backmapping
+- package installation and CLI entry points
+
+Model serialization remains language-specific:
+- MATLAB saves `model.mat`
+- Python saves `model.npz`
+
+This choice preserves practical workflow parity without forcing fragile binary compatibility between the two implementations.
 
 ---
 

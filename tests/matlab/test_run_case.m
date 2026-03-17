@@ -1,6 +1,6 @@
-function test_pme()
+function test_run_case()
 
-disp("Running PME test")
+disp("Running run_case test")
 
 this_file = mfilename('fullpath');
 matlab_tests_dir = fileparts(this_file);
@@ -25,6 +25,6 @@ save(fullfile(results_dir, "model.mat"), "model")
 assert(isfile(fullfile(results_dir, "report.mat")), ...
     "Report file not found: %s", fullfile(results_dir, "report.mat"))
 
-disp("PME test passed")
+disp("run_case test passed")
 
 end

@@ -1,20 +1,55 @@
 # Standard benchmark — PME — airfoil
 
-This benchmark runs the **standard dataset-selection** workflow for the **airfoil** case using **PME**.
+This benchmark defines a **standard dataset-selection workflow** for the **airfoil** case using **PME**.
+
+The workflow is specified through **JSON configuration files** and can be executed with both **MATLAB and Python implementations**.
+
+---
 
 ## Files
 
-- `case.json` — main configuration for the dimensionality-reduction run
-- `backmapping.json` — example backmapping configuration
+- `case.json` — configuration for the dimensionality-reduction run  
+- `backmapping.json` — example configuration for backmapping  
+
+---
 
 ## Dataset
 
-This case relies on the **airfoil benchmark dataset** described in:
+This benchmark relies on the **airfoil dataset** described in:
 
-```text
-databases/airfoil/
-```
+    databases/airfoil/
+
+The dataset may be:
+
+- already available locally, or  
+- referenced/downloaded through the metadata defined in the repository  
+
+---
+
+## Workflow
+
+Run PME:
+
+    pme-run case.json
+
+or
+
+    matlab -batch "run_pme('case.json')"
+
+Run backmapping:
+
+    pme-back backmapping.json
+
+or
+
+    matlab -batch "run_back('backmapping.json')"
+
+Outputs are written to the `outdir` specified in the JSON configuration.
+
+---
 
 ## Notes
 
-The benchmark definition is repository-aligned, but execution still depends on local dataset availability.
+- This benchmark represents a **reference configuration** for the airfoil case  
+- It is used for **testing, validation, and reproducibility**  
+- The same configuration is compatible with both MATLAB and Python  

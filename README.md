@@ -11,171 +11,167 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18962859.svg)](https://doi.org/10.5281/zenodo.18962859)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![MATLAB tests](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/matlab-tests.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/matlab-tests.yml)
+[![Python tests](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/python-tests.yml/badge.svg)](https://github.com/cnr-inm-mao/pme-toolkit/actions/workflows/python-tests.yml)
 
-PME-toolkit is an open-source repository for **design-space dimensionality reduction in parametric shape optimization** based on **Parametric Model Embedding (PME)** and its physics-aware variants.
+PME-toolkit implements **Parametric Model Embedding (PME)** and its physics-aware extensions (**PI-PME**, **PD-PME**) for **design-space dimensionality reduction in simulation-based shape optimization**.
 
-The repository currently contains:
+The toolkit provides a **dual MATLAB/Python implementation**, supporting **JSON-driven reproducible workflows**, **analytical backmapping**, and **cross-language regression testing**.
 
-- a **MATLAB reference implementation** of **PME**, **PI-PME**, and **PD-PME** for shape-optimization workflows;
-- a **Python scaffold** for shared configuration handling and future porting;
-- **benchmark case definitions** under `benchmarks/`;
-- **dataset metadata and download support** under `databases/` for the **glider** and **airfoil** benchmarks;
-- **tests** with a small bundled glider dataset under `tests/`;
-- a **MkDocs documentation site** under `docs/`.
+---
 
-## Current status
+## Statement of need
 
-At the current repository stage:
+Simulation-Based Design Optimization (SBDO) is often limited by the **curse of dimensionality** associated with high-dimensional parametric design spaces.
 
-- **MATLAB is the reference implementation**;
-- **PME, PI-PME, and PD-PME are implemented in MATLAB** for the current shape-optimization scope;
-- the **Python package is not yet feature-complete** and should be considered infrastructure for the future port;
-- the most reliable self-contained workflow is the **test glider case** in `tests/`;
-- the full benchmark workflows may require **external datasets** not bundled directly in the repository.
+PME-toolkit addresses this limitation by constructing a **low-dimensional embedding of the design space** that:
 
-## Methods in scope
+- preserves a direct link to original design variables  
+- enables **analytical backmapping**  
+- supports **efficient optimization in reduced coordinates**  
+- maintains **physical interpretability of the solution space**
 
-### PME
+This makes PME particularly suited for **parametric CAD-based shape optimization workflows** in marine and aerospace engineering.
 
-PME builds an augmented representation of the design space by combining:
+---
 
-- geometric deviations from a baseline configuration;
-- original design variables.
+## Key features
 
-The resulting reduced basis supports **analytical backmapping** to the original parametric variables.
+- dual **MATLAB / Python** implementation  
+- support for **PME, PI-PME, and PD-PME**  
+- **JSON-driven workflows** for reproducibility  
+- **analytical backmapping** to original variables  
+- **cross-language regression testing** (MATLAB ↔ Python)  
+- benchmark-ready structure for **glider** and **airfoil** cases  
 
-### PI-PME
+---
 
-PI-PME extends PME by including **physical observables** such as distributed fields and/or scalar performance indicators.
+## Repository structure
 
-### PD-PME
+    pme-toolkit/
+    ├── run_pme.m
+    ├── run_back.m
+    ├── matlab/
+    ├── python/
+    ├── benchmarks/
+    ├── databases/
+    ├── tests/
+    ├── docs/
+    └── paper/
 
-PD-PME is the physics-driven variant currently used in the repository for **shape optimization**. In this scope it is implemented in MATLAB and can be run through the same JSON-driven workflow. Broader generalization beyond shape optimization remains future work.
-
-## Repository layout
-
-```text
-pme-toolkit/
-├── README.md
-├── LICENSE
-├── CITATION.cff
-├── mkdocs.yml
-├── run_pme.m
-├── run_back.m
-├── matlab/
-├── python/
-├── benchmarks/
-├── databases/
-├── docs/
-├── tests/
-└── paper/
-```
+---
 
 ## Quick start
 
-### MATLAB: self-contained local test case
+### MATLAB
 
-The repository includes a tiny glider dataset under `tests/data/` that can be used without external downloads.
+Run a reference case:
 
-```matlab
-addpath(genpath("matlab/src"));
-out = pme.run_case("tests/cases/test_glider.json");
-```
+    matlab -batch "run_pme('tests/cases/test_glider.json')"
 
-For standalone backmapping:
+Run backmapping:
 
-```matlab
-addpath(genpath("matlab/src"));
-out = pme.backmapping("tests/cases/test_glider_back.json", "x01", [0.1; 0.7; 0.3; 0.9; 0.2]);
-```
+    matlab -batch "run_back('tests/cases/test_glider_back.json')"
 
-### MATLAB: benchmark runner wrappers
+---
 
-Two thin wrappers are provided at repository root:
+### Python
 
-- `run_pme.m`
-- `run_back.m`
+Run PME:
 
-They mirror the JSON-driven workflow used in the benchmark folders.
+    pme-run tests/cases/test_glider.json
 
-Example:
+Run backmapping:
 
-```matlab
-run_pme("benchmarks/standard/pme/glider/case.json");
-run_back("benchmarks/standard/pme/glider/backmapping.json");
-```
+    pme-back tests/cases/test_glider_back.json
+
+Install locally:
+
+    pip install -e python/
+
+---
+
+## MATLAB–Python consistency
+
+PME-toolkit includes a **cross-language regression test** on a reference glider case.
+
+The regression validates consistency between MATLAB and Python implementations in terms of:
+
+- retained dimensionality (`nconf`)  
+- eigenvalues of the reduced system  
+- reduced modes (up to sign ambiguity)  
+
+This ensures reproducibility and numerical alignment across implementations.
+
+---
 
 ## Benchmarks and datasets
 
-The repository contains benchmark definitions for:
+Benchmark definitions are available for:
 
 - `glider`
 - `airfoil`
 
-At this stage:
+A lightweight dataset is bundled under:
 
-- **glider** is the best documented benchmark and includes dataset metadata in `databases/glider/`;
-- **airfoil** also includes dataset metadata in `databases/airfoil/`;
+    tests/data/
 
-See:
+Larger datasets are described in:
 
-- `benchmarks/README.md`
-- `databases/README.md`
-- `docs/benchmarks.md`
-- `docs/datasets.md`
+- `databases/`
+- documentation pages
 
-## MATLAB and Python subpackages
-
-- `matlab/README.md` describes the current reference implementation.
-- `python/README.md` describes the current Python status and limitations.
+---
 
 ## Documentation
 
-The documentation site is built with **MkDocs**.
+Full documentation is available at:
 
-Main pages include:
-
-- overview
-- quickstart
-- configuration specification
-- MATLAB API
-- Python API
-- reproducibility notes
-- citation
-- backmapping
-- benchmarks
-- datasets
+https://cnr-inm-mao.github.io/pme-toolkit/
 
 Build locally with:
 
-```bash
-mkdocs serve
-```
+    mkdocs serve
+
+---
 
 ## Testing
 
 ### MATLAB
 
-Run the MATLAB regression suite from repository root:
-
-```matlab
-run("tests/run_tests.m")
-```
+    matlab -batch "cd('tests/matlab'); run_tests"
 
 ### Python
 
-From `python/`:
+    pytest tests/python -q
 
-```bash
-PYTHONPATH=src pytest -q
-```
+---
 
-The Python tests currently validate the configuration loader scaffold only.
+## Installation
+
+### Python
+
+Local installation:
+
+    pip install -e python/
+
+PyPI (planned):
+
+    pip install pme-toolkit
+
+### MATLAB
+
+No installation required.
+
+---
 
 ## Citation
 
-If you use PME-toolkit, cite the software repository together with the methodological publications listed in `CITATION.cff` and `paper/paper.md`.
+If you use PME-toolkit, please cite the software release and the associated methodological publications listed in:
+
+    CITATION.cff
+
+---
 
 ## License
 
-This repository is released under the MIT License.
+This project is distributed under the MIT License.
