@@ -14,14 +14,17 @@ PME-toolkit is a framework for **design-space dimensionality reduction in parame
 
 The toolkit provides a **reproducible, data-driven workflow** to construct low-dimensional representations of high-dimensional parametric design spaces while preserving a direct link to the original variables.
 
+**Python for daily use. MATLAB for reference validation.**
+
 ---
 
 ## Project status
 
 PME-toolkit is a **released research software package (v1.2)**:
 
-- PyPI package (installable): https://pypi.org/project/pme-toolkit/
-- Zenodo archive (versioned, citable): https://doi.org/10.5281/zenodo.18962859
+- [PyPI package (installable)](https://pypi.org/project/pme-toolkit/)
+- [Zenodo archive (versioned, citable)](https://doi.org/10.5281/zenodo.18962859)
+- [GitHub repository](https://github.com/cnr-inm-mao/pme-toolkit)
 - submitted to JOSS (under review)
 
 The Python implementation is fully functional and recommended for use.  
@@ -53,16 +56,38 @@ A typical PME workflow consists of:
 
 ---
 
-## Quick start
+## Reproducibility and benchmarks
 
-### Python
+PME-toolkit is designed for **reproducible benchmarking across methods and datasets**.
 
-    pip install pme-toolkit
-    pme-run tests/cases/test_glider.json
+Validated on:
 
-### MATLAB
+- a **tiny self-contained glider case** (included in the repository)  
+- **benchmark configurations** for airfoil and underwater glider geometries  
+- **larger datasets** available via Zenodo  
 
-    run_pme("tests/cases/test_glider.json")
+All workflows are defined through **JSON configuration files**, ensuring full reproducibility of experiments.
+
+---
+
+## Why PME-toolkit?
+
+PME-toolkit extends classical PCA-based approaches through a **generalized, weighted formulation** tailored to parametric design problems.
+
+- **Analytical backmapping (core feature)**  
+  Reduced coordinates can be mapped back exactly to the original parametric variables.
+
+- **Generalized formulation with weights**  
+  PME relies on a weighted POD/PCA formulation, where weights can encode the role of variables (including null weights).  
+  This formulation is not equivalent to standard PCA and cannot be reduced to a simple SVD.
+
+- **Design-aware latent space**  
+  Unlike standard PCA (typically applied to state snapshots without variables), PME explicitly incorporates parametric design variables into the embedding.
+
+- **Physics-aware variants**  
+  PI-PME and PD-PME embed physical information into the dimensionality-reduction process.
+
+Result: **interpretable and optimization-ready reduced spaces**.
 
 ---
 
