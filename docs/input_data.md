@@ -12,11 +12,23 @@ A dataset typically includes:
 
 ---
 
+## Global data matrix
+
+PME-toolkit represents all information through a **block-structured data matrix**, where each column corresponds to one design realization.
+
+![PME data matrix structure](images/data_matrix_structure.png)
+
+**Figure:** Structure of the PME data matrix. Geometry, design variables, optional distributed fields, and scalar quantities are stacked into a single matrix. This unified representation enables dimensionality reduction while preserving the link to the original parametric variables.
+
+---
+
 ## Geometry representation
 
 Geometry is represented as a matrix:
 
-    D ∈ R^(n_features × n_samples)
+$$
+D \in \mathbb{R}^{n_{\text{features}} \times n_{\text{samples}}}
+$$
 
 Where:
 
@@ -40,9 +52,11 @@ Example:
 
 Design variables are stored as:
 
-    U ∈ R^(n_variables × n_samples)
+$$
+U \in \mathbb{R}^{n_{\text{variables}} \times n_{\text{samples}}}
+$$
 
-These correspond to the original parametric model.
+These correspond to the original parametric model and are explicitly included in the data matrix, enabling **analytical backmapping** from the reduced space.
 
 ---
 
@@ -50,8 +64,13 @@ These correspond to the original parametric model.
 
 PME internally constructs:
 
-    P = [D
-         U]
+$$
+\mathbf{P} =
+\begin{bmatrix}
+\mathbf{D} \\
+\mathbf{U}
+\end{bmatrix}
+$$
 
 This is the matrix used for dimensionality reduction.
 
@@ -64,7 +83,7 @@ For PI-PME / PD-PME, additional matrices may be included:
 - pressure fields
 - performance indicators
 
-These are appended as additional rows in P.
+These are appended as additional rows in P, extending the embedding with physical information.
 
 ---
 
@@ -80,4 +99,4 @@ All data must be:
 
 ## Summary
 
-The entire PME workflow relies on a **consistent data matrix representation**, where each column represents one design realization.
+The entire PME workflow relies on a **consistent data matrix representation**, where each column represents one design realization and multiple data sources are combined into a unified embedding space.
