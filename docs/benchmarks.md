@@ -67,8 +67,8 @@ Users may need to download datasets and update paths accordingly.
 
 ## Current maturity
 
-- **glider** → reference benchmark, fully aligned with workflows and tests  
-- **airfoil** → benchmark definitions and dataset metadata available  
+- **airfoil** → benchmark definitions and dataset metadata available on Zenodo (DOI: [10.5281/zenodo.18958554](https://doi.org/10.5281/zenodo.18958554))
+- **glider** → benchmark definitions and dataset metadata available on Zenodo (DOI: [10.5281/zenodo.18936593](https://doi.org/10.5281/zenodo.18936593))
 
 ---
 
