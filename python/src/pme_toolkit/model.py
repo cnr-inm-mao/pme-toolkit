@@ -296,25 +296,22 @@ def _weighted_fit(
     # This avoids materialising the (R x R) matrices A and A W, which
     # dominate memory once R = Jdir*K + nDV + nPhys grows past ~10^4.
     w_diag = np.diag(w).astype(float)             # W is diagonal by construction
-    w_sqrt = np.sqrt(np.maximum(w_diag, 0.0))     # (R,)
-    pw = pc * w_sqrt[:, None]                     # (R, S)  = W^{1/2} pc
-    g = (pw.T @ pw) / float(s)                    # (S, S)  symmetric PSD
-    g = 0.5 * (g + g.T)
-    eigvals_g, vecs_g = np.linalg.eigh(g)         # ascending
+    g = (pc.T @ (w_diag[:, None] * pc)) / float(s)  # (S, S) = pc^T W pc / s
+    g = 0.5 * (g + g.T)                            # symmetric PSD
+    eigvals_g, vecs_g = np.linalg.eigh(g)          # ascending
 
     order = np.argsort(eigvals_g)[::-1]
     eigvals_g = eigvals_g[order]
     vecs_g = vecs_g[:, order]
     l_full = np.maximum(eigvals_g, 0.0)           # (S,)
 
-    # Recover z = W^{-1/2} y where y = (W^{1/2} pc) v are M-eigenvectors.
-    # Rows where w_i = 0 are unweighted; set z_i = 0 there (any value gives
-    # the same weighted norm; this keeps z bounded).
-    inv_w_sqrt = np.zeros_like(w_sqrt)
-    nz = w_sqrt > 0.0
-    inv_w_sqrt[nz] = 1.0 / w_sqrt[nz]
-    y_full = pw @ vecs_g                          # (R, S)
-    z_full = y_full * inv_w_sqrt[:, None]         # (R, S)
+    # Recover full-space eigenvectors directly from snapshots:
+    #     z = pc @ v_g
+    # where v_g are eigenvectors of G = pc^T W pc / s. This satisfies
+    # A W z = lambda z for the full vector (including rows with w_i = 0,
+    # which are coupled to weighted rows through pc and must not be
+    # zeroed out).
+    z_full = pc @ vecs_g                          # (R, S)
 
     # Normalize Z so that Z' W Z = I (matches original convention)
     an = np.einsum("ij,i,ij->j", z_full, w_diag, z_full)
