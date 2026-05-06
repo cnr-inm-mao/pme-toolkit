@@ -6,7 +6,6 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.linalg import eig
 
 from .config_loader import load_case_json
 from .filters import apply_filters
@@ -284,23 +283,45 @@ def _weighted_fit(
 
     w, stats_w = build_weights(delta, layout, cfg, uinfo, blocks)
 
-    a = (pc @ pc.T) / float(s)
-    aw = a @ w
+    # --- Snapshot-form (Gram) eigendecomposition --------------------------
+    # The original problem is the generalized eigensystem
+    #     A W z = lambda z,    A = pc pc^T / s
+    # with W diagonal PSD (build_weights always returns a diagonal matrix
+    # assembled from scaled identity blocks). Multiplying by W^{1/2} gives
+    # the equivalent symmetric eigenproblem
+    #     M y = lambda y,      M = W^{1/2} A W^{1/2},   y = W^{1/2} z
+    # whose nonzero eigenvalues coincide with those of the (S x S) Gram
+    # matrix
+    #     G = (W^{1/2} pc)^T (W^{1/2} pc) / s = pc^T W pc / s.
+    # This avoids materialising the (R x R) matrices A and A W, which
+    # dominate memory once R = Jdir*K + nDV + nPhys grows past ~10^4.
+    w_diag = np.diag(w).astype(float)             # W is diagonal by construction
+    w_sqrt = np.sqrt(np.maximum(w_diag, 0.0))     # (R,)
+    pw = pc * w_sqrt[:, None]                     # (R, S)  = W^{1/2} pc
+    g = (pw.T @ pw) / float(s)                    # (S, S)  symmetric PSD
+    g = 0.5 * (g + g.T)
+    eigvals_g, vecs_g = np.linalg.eigh(g)         # ascending
 
-    eigvals_raw, eigvecs_raw = eig(aw)
-    eigvals_raw = np.real(eigvals_raw)
-    eigvecs_raw = np.real(eigvecs_raw)
+    order = np.argsort(eigvals_g)[::-1]
+    eigvals_g = eigvals_g[order]
+    vecs_g = vecs_g[:, order]
+    l_full = np.maximum(eigvals_g, 0.0)           # (S,)
 
-    order = np.argsort(eigvals_raw)[::-1]
-    l_full = np.maximum(eigvals_raw[order], 0.0)
-    z_full = eigvecs_raw[:, order]
+    # Recover z = W^{-1/2} y where y = (W^{1/2} pc) v are M-eigenvectors.
+    # Rows where w_i = 0 are unweighted; set z_i = 0 there (any value gives
+    # the same weighted norm; this keeps z bounded).
+    inv_w_sqrt = np.zeros_like(w_sqrt)
+    nz = w_sqrt > 0.0
+    inv_w_sqrt[nz] = 1.0 / w_sqrt[nz]
+    y_full = pw @ vecs_g                          # (R, S)
+    z_full = y_full * inv_w_sqrt[:, None]         # (R, S)
 
-    # Normalize Z so that Z' W Z = I
-    an = np.diag(z_full.T @ w @ z_full)
+    # Normalize Z so that Z' W Z = I (matches original convention)
+    an = np.einsum("ij,i,ij->j", z_full, w_diag, z_full)
     an = np.sqrt(np.maximum(an, np.finfo(float).eps))
     z_full = z_full / an[None, :]
 
-    ak_full = pc.T @ w @ z_full
+    ak_full = pc.T @ (w_diag[:, None] * z_full)
 
     return {
         "P0": p0,
