@@ -1,0 +1,14 @@
+{
+  "name": "propeller",
+  "source": "Zenodo",
+  "record": "20207996",
+  "doi": "10.5281/zenodo.20207996",
+  "version": "1.0",
+  "files": {
+    "dbfile": "database.mat"
+  },
+  "download": {
+    "archive_url": "https://zenodo.org/records/20207996/files/pme-benchmark-propeller.zip",
+    "archive_name": "pme-benchmark-propeller.zip"
+  }
+}
