@@ -86,10 +86,6 @@ def _convert_idx_active(
 
     idx = np.asarray(idx_active, dtype=int).ravel()
 
-    # Repository JSON is usually 0-based. But allow 1-based manual input.
-    if np.min(idx) >= 1 and np.max(idx) <= mbase:
-        idx = idx - 1
-
     if np.any(idx < 0) or np.any(idx >= mbase):
         raise ValueError("idx_active contains out-of-range entries")
 
