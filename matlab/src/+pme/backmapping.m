@@ -472,7 +472,7 @@ switch rule
             '3sigma requires model.Lr (k x 1).');
         Lr = model.Lr(:);
         assert(numel(Lr)>=k, 'model.Lr must have at least k elements.');
-        sig = sqrt(Lr(1:k));
+        sig = sqrt(max(Lr(1:k), 0));
         amin = -c * sig;
         amax = +c * sig;
         rule_used = "3sigma";
