@@ -23,7 +23,7 @@ from .plotting import (
     source_colors,
 )
 from .filters import apply_filters, FilterResult
-from .weights import build_weights, build_wf, build_wc
+from .weights import build_weights, build_weights_diag, build_wf, build_wc
 from .datasets import ensure_case_inputs
 
 __all__ = [
@@ -49,6 +49,7 @@ __all__ = [
     "apply_filters",
     "FilterResult",
     "build_weights",
+    "build_weights_diag",
     "build_wf",
     "build_wc",
     "ensure_case_inputs",

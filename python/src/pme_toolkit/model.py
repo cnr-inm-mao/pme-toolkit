@@ -6,13 +6,12 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.linalg import eig
 
 from .config_loader import load_case_json
 from .filters import apply_filters
 from .io import load_mat_database, load_mat_range
 from .layout import parse_layout
-from .weights import build_weights
+from .weights import build_weights_diag
 
 import json
 
@@ -259,6 +258,15 @@ def _u_rows_in_p(mode: str, dlen: int, mact: int) -> tuple[int, int]:
     raise ValueError(f"Unknown mode: {mode}")
 
 
+def _w_as_diag(arr) -> Array:
+    """Coerce a stored W (legacy dense (R, R) or new 1D (R,)) to a 1D diagonal."""
+    a = np.asarray(arr, dtype=float)
+    if a.ndim == 2:
+        # legacy: extract the diagonal of a dense block-diagonal matrix
+        return np.ascontiguousarray(np.diag(a))
+    return np.ascontiguousarray(a.reshape(-1))
+
+
 def _weighted_fit(
     p: Array,
     mode: str,
@@ -278,30 +286,50 @@ def _weighted_fit(
     delta_m = np.mean(delta, axis=1, keepdims=True)
     pc = delta - delta_m
 
-    w, stats_w = build_weights(delta, layout, cfg, uinfo, blocks)
+    w_diag, stats_w = build_weights_diag(delta, layout, cfg, uinfo, blocks)
 
-    a = (pc @ pc.T) / float(s)
-    aw = a @ w
+    # --- Snapshot-form (Gram) eigendecomposition --------------------------
+    # The original problem is the generalized eigensystem
+    #     A W z = lambda z,    A = pc pc^T / s
+    # with W diagonal PSD (build_weights_diag returns the diagonal of W
+    # directly; the dense (R, R) matrix is never materialised). Multiplying
+    # by W^{1/2} gives the equivalent symmetric eigenproblem
+    #     M y = lambda y,      M = W^{1/2} A W^{1/2},   y = W^{1/2} z
+    # whose nonzero eigenvalues coincide with those of the (S x S) Gram
+    # matrix
+    #     G = (W^{1/2} pc)^T (W^{1/2} pc) / s = pc^T W pc / s.
+    # This avoids materialising the (R x R) matrices A and A W, which
+    # dominate memory once R = Jdir*K + nDV + nPhys grows past ~10^4.
+    g = (pc.T @ (w_diag[:, None] * pc)) / float(s)  # (S, S) = pc^T W pc / s
+    g = 0.5 * (g + g.T)                            # symmetric PSD
+    eigvals_g, vecs_g = np.linalg.eigh(g)          # ascending
 
-    eigvals_raw, eigvecs_raw = eig(aw)
-    eigvals_raw = np.real(eigvals_raw)
-    eigvecs_raw = np.real(eigvecs_raw)
+    order = np.argsort(eigvals_g)[::-1]
+    eigvals_g = eigvals_g[order]
+    vecs_g = vecs_g[:, order]
+    l_full = np.maximum(eigvals_g, 0.0)           # (S,)
 
-    order = np.argsort(eigvals_raw)[::-1]
-    l_full = np.maximum(eigvals_raw[order], 0.0)
-    z_full = eigvecs_raw[:, order]
+    # Recover full-space eigenvectors directly from snapshots:
+    #     z = pc @ v_g
+    # where v_g are eigenvectors of G = pc^T W pc / s. This satisfies
+    # A W z = lambda z for the full vector (including rows with w_i = 0,
+    # which are coupled to weighted rows through pc and must not be
+    # zeroed out).
+    z_full = pc @ vecs_g                          # (R, S)
 
-    # Normalize Z so that Z' W Z = I
-    an = np.diag(z_full.T @ w @ z_full)
+    # Normalize Z so that Z' W Z = I (matches original convention)
+    an = np.einsum("ij,i,ij->j", z_full, w_diag, z_full)
     an = np.sqrt(np.maximum(an, np.finfo(float).eps))
     z_full = z_full / an[None, :]
 
-    ak_full = pc.T @ w @ z_full
+    ak_full = pc.T @ (w_diag[:, None] * z_full)
 
     return {
         "P0": p0,
         "delta_m": delta_m,
-        "W": w,
+        # W is stored as its 1D diagonal (length R) -- the dense (R, R)
+        # matrix is never materialised; see build_weights_diag.
+        "W": w_diag,
         "statsW": stats_w,
         "L_full": l_full,
         "Z_full": z_full,
@@ -365,7 +393,8 @@ class PmeModel:
         delta = p - self.p0[:, [0]]
         pc = delta - self.delta_m[:, [0]]
 
-        alpha = pc.T @ self.w @ self.z_reduced
+        # self.w is the 1D diagonal of the weight matrix (length R)
+        alpha = pc.T @ (self.w[:, None] * self.z_reduced)
         return np.asarray(alpha, dtype=float)
 
     def transform_valid(self, db: Array) -> Array:
@@ -471,7 +500,7 @@ class PmeModel:
             p0=np.asarray(data["p0"], dtype=float),
             delta_m=np.asarray(data["delta_m"], dtype=float),
             pc=np.asarray(data["pc"], dtype=float),
-            w=np.asarray(data["w"], dtype=float),
+            w=_w_as_diag(data["w"]),
             z_reduced=np.asarray(data["z_reduced"], dtype=float),
             eigvals_reduced=np.asarray(data["eigvals_reduced"], dtype=float),
             eigvals_full=np.asarray(data["eigvals_full"], dtype=float),
@@ -556,7 +585,8 @@ def fit_model(
     z_reduced = z_full[:, :nconf]
     eigvals_reduced = l_full[:nconf]
 
-    alpha_train = pc.T @ w @ z_reduced
+    # w is the 1D diagonal of the weight matrix (length R)
+    alpha_train = pc.T @ (w[:, None] * z_reduced)
 
     return PmeModel(
         mode=mode,

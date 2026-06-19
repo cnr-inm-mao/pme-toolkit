@@ -338,7 +338,8 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
 
     pc = np.asarray(model.pc, dtype=float)
     z_full = np.asarray(model.z_full, dtype=float)
-    w = np.asarray(model.w, dtype=float)
+    # model.w is the 1D diagonal of the weight matrix (length R)
+    w = np.asarray(model.w, dtype=float).reshape(-1)
 
     var_src = np.zeros((ninf,), dtype=float)
     for i, src in enumerate(sources):
@@ -350,7 +351,7 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
     for jconf in range(1, kplot + 1):
         k = jconf
         zk = z_full[:, :k]
-        ak = pc.T @ w @ zk
+        ak = pc.T @ (w[:, None] * zk)
         prec = zk @ ak.T
         e = pc - prec
 
