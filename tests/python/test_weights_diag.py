@@ -1,66 +1,83 @@
-"""
-Parity tests for the diagonal-only weights builder.
-
-`build_weights_diag` is a memory-efficient alternative to `build_weights`:
-it returns the 1D diagonal of the (always block-diagonal) W matrix instead
-of the full (R, R) array. This test asserts numerical parity for every
-supported PME mode, and that the downstream Gram-form fit produces
-identical eigenvalues / weighted projections to the legacy dense path.
-"""
+"""Check metric normalization and the public dense compatibility interfaces."""
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from pme_toolkit.config_loader import load_config
 from pme_toolkit.io import load_mat_database, load_mat_range
-from pme_toolkit.layout import parse_layout
-from pme_toolkit.filters import apply_filters
 from pme_toolkit.model import fit_pme
-from pme_toolkit.weights import build_weights, build_weights_diag
+from pme_toolkit.weights import build_wc, build_wf, build_weights, build_weights_diag
 
 
-def _glider_blocks():
-    repo_root = Path(__file__).resolve().parents[2]
-    cfg_path = repo_root / "benchmarks" / "standard" / "pme" / "glider" / "case.json"
-    cfg = load_config(cfg_path)
-    db = load_mat_database(repo_root / "tests" / "data" / "glider_tiny.mat")
-    urange = load_mat_range(repo_root / "tests" / "data" / "glider_range.mat")
-    layout = parse_layout(cfg)
+@pytest.mark.parametrize("mode", ["pme", "pi", "pd"])
+def test_information_weights_match_known_source_variances(mode):
+    # This sequence has population variance one. The source variances are
+    # therefore known from the integer row amplitudes, independently of
+    # either weight interface.
+    sequence = np.array([[-1.0, 1.0, -1.0, 1.0]])
+    geometry = np.array([[2.0], [1.0]]) * sequence
+    native = 3.0 * sequence
+    fields = np.array([[1.0], [2.0], [3.0], [4.0]]) * sequence
+    scalars = np.array([[2.0], [3.0], [0.0]]) * sequence
+    layout = {
+        "D": {"nRows": 2},
+        "F": {"items": [{"nRows": 4, "nCond": 2}]},
+        "C": {"items": [{"nCond": 2}, {"nCond": 1}]},
+    }
+    blocks = {"F": fields, "C": scalars}
+    field_weights = [1 / 5, 1 / 5, 1 / 25, 1 / 25]
+    scalar_weights = [1 / 4, 1 / 9, 1 / np.finfo(float).eps]
+    if mode == "pme":
+        delta = np.vstack([geometry, native])
+        expected = [1 / 5, 1 / 5, 0.0]
+        ninfo = {"D": 1, "F": 0, "C": 0, "total": 1}
+    elif mode == "pi":
+        delta = np.vstack([geometry, native, fields, scalars])
+        expected = [1 / 5, 1 / 5, 0.0] + field_weights + scalar_weights
+        ninfo = {"D": 1, "F": 2, "C": 3, "total": 6}
+    else:
+        delta = np.vstack([native, fields, scalars])
+        expected = [0.0] + field_weights + scalar_weights
+        ninfo = {"D": 0, "F": 2, "C": 3, "total": 5}
 
-    filt = apply_filters(db, cfg, layout)
-    db_used = np.asarray(filt.db_used, dtype=float)
+    expected_stats = {
+        "mode": mode, "sizes": {"D": 2, "U": 1, "F": 4, "C": 3},
+        "ninfo": ninfo, "wU": 0.0, "varU": 9.0,
+    }
+    if mode != "pd":
+        expected_stats.update(wD=1 / 5, varD=5.0)
+    if mode == "pi":
+        expected_stats["ptrU0"] = 2
 
-    # mimic the slicing fit_model performs
-    from pme_toolkit.model import _slice_blocks, _prepare_vars, _compose_p
+    for builder in (build_weights_diag, build_weights):
+        metric, stats = builder(delta, layout, {"mode": mode}, {"Mact": 1}, blocks)
+        target = expected if builder is build_weights_diag else np.diag(expected)
+        np.testing.assert_array_equal(metric, target)
+        assert stats == expected_stats
 
-    blocks = _slice_blocks(db_used, layout)
-    uact, uinfo = _prepare_vars(blocks["Ubase"], cfg, urange)
-    p = _compose_p(cfg["mode"], blocks["D"], uact, blocks["F"], blocks["C"])
-    p0 = p[:, [0]]
-    delta = p - p0
-    return delta, layout, cfg, uinfo, blocks
+    if mode != "pme":
+        field_start = 3 if mode == "pi" else 1
+        field_metric, field_count, scalar_start = build_wf(delta, field_start, layout, 4)
+        scalar_metric, scalar_count = build_wc(delta, scalar_start, layout, 3)
+        np.testing.assert_array_equal(field_metric, np.diag(field_weights))
+        np.testing.assert_array_equal(scalar_metric, np.diag(scalar_weights))
+        assert field_count == 2
+        assert scalar_count == 3
+        assert scalar_start == field_start + 4
 
 
-def test_build_weights_diag_matches_dense_pme():
-    delta, layout, cfg, uinfo, blocks = _glider_blocks()
-    cfg = dict(cfg)
-    cfg["mode"] = "pme"
-
-    w_dense, stats_dense = build_weights(delta, layout, cfg, uinfo, blocks)
-    w_diag, stats_diag = build_weights_diag(delta, layout, cfg, uinfo, blocks)
-
-    assert w_dense.shape[0] == w_dense.shape[1] == w_diag.size
-    np.testing.assert_allclose(w_diag, np.diag(w_dense), rtol=1e-12, atol=0.0)
-
-    # off-diagonal of the legacy matrix must be exactly zero (sanity)
-    off = w_dense - np.diag(np.diag(w_dense))
-    assert float(np.max(np.abs(off))) == 0.0
-
-    # stats must agree on the keys both paths populate
-    for key in ("mode", "sizes", "ninfo", "wD", "wU", "varD", "varU"):
-        assert stats_diag.get(key) == stats_dense.get(key) or np.allclose(
-            stats_diag.get(key), stats_dense.get(key)
-        )
+@pytest.mark.parametrize("builder", [build_wf, build_wc])
+@pytest.mark.parametrize("length", [0, 2])
+def test_dense_component_interfaces_preserve_empty_and_fallback_blocks(builder, length):
+    delta = np.array([[99.0, -99.0], [-1.0, 1.0], [-2.0, 2.0]])
+    result = builder(delta, 1, {}, length)
+    metric, count = result[:2]
+    expected = np.diag([1 / 5, 1 / 5]) if length else np.zeros((0, 0))
+    np.testing.assert_array_equal(metric, expected)
+    assert count == (1 if length else 0)
+    if builder is build_wf:
+        assert result[2] == 1 + length
 
 
 def test_fit_pme_glider_eigvals_unchanged():

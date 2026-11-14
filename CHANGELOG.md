@@ -36,6 +36,12 @@ and semantic versioning principles.
 
 ### Changed
 
+- Replace the augmented nonsymmetric direct eigensolve with a symmetric
+  solve on positive-weight observations. Direct and snapshot are two solvers
+  within one fitting pipeline, with shared rank and variance-selection rules;
+  the previous direct code is used only from a pinned regression revision.
+- Make the public dense weight builders compatibility wrappers over the
+  diagonal builders in both languages, keeping one source-weight implementation.
 - Lift only resolved positive modes and keep complete eigenvalue clusters at
   the automatic retention boundary. Datasets with no resolved positive
   weighted variance now raise a clear error.

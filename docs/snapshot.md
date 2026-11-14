@@ -23,12 +23,48 @@ are recorded under the existing `stats_w["snapshot"]` / `statsW.snapshot`
 diagnostics. The `snapshot` options object supplies the numerical tolerances
 for both solvers.
 
-The direct path solves $BB^\mathsf{T}/S$, with
-$B=\operatorname{diag}(\sqrt{w_+})P_{c,+}$, and obtains the paired native modes
-from its sample coefficients. It preserves the direct PME formulation without
-reintroducing the old dense diagonal weights or nonsymmetric augmented operator.
-The previous implementation remains available in version history and is used
-as an independent regression baseline.
+### One fitting pipeline
+
+Both solvers use the same case loading, filtering, variable preparation,
+centering and source weights. The `solver` setting changes the matrix used for
+the eigensolve and the corresponding mode recovery. The positive-spectrum
+selection, rank cutoff, trace diagnostics and confidence selection are shared.
+Both return the same model interface to transformation, native backmapping,
+reporting and plotting. `auto` selects one of these two solvers; it does not
+introduce a third fitting implementation.
+
+There is one direct implementation in the toolkit. It replaces the previous
+augmented covariance-times-metric eigensolve. The earlier implementation is
+retrieved from the pinned Git revision only for regression tests; it is not
+copied into the package or selected by a runtime fallback.
+
+### Why the direct implementation changed
+
+The previous direct code solved $CWz=\lambda z$, where
+$C=P_cP_c^\mathsf{T}/S$ and $W=\operatorname{diag}(w)$, on all $R$ rows,
+including zero-weight native variables. Although the positive eigenvalues
+are real, $CW$ is generally nonsymmetric.
+
+The direct path now solves $BB^\mathsf{T}/S$, with
+$B=\operatorname{diag}(\sqrt{w_+})P_{c,+}$. This symmetric eigenproblem has
+dimension $Q_+$ and excludes zero-weight rows. Observation modes are recovered
+by undoing the positive row scaling; native and other zero-weight components
+are recovered from the paired sample coefficients. This gives the same
+resolved positive PME eigenspaces, subject to numerical precision and the
+usual sign or repeated-eigenspace basis freedom.
+The symmetric solver supplies an orthonormal observation basis, including
+within repeated eigenspaces; undoing the row scaling yields metric-orthonormal
+modes. Normalizing general eigenvectors individually does not by itself
+enforce this mutual orthogonality.
+
+The change therefore reduces the eigenproblem dimension and uses a symmetric
+eigensolver with the same spectral policy as snapshot. Diagonal weight storage
+is a shared improvement used by both solvers. Dense weight-builder interfaces
+remain thin compatibility wrappers over the single diagonal implementation.
+These structural savings do not imply a universal reduction in total peak
+memory or runtime: direct fitting also constructs the weighted observation
+array and paired sample vectors. The complete-dataset comparison is described
+in [Zenodo regression](zenodo-regression.md).
 
 ```json
 {
