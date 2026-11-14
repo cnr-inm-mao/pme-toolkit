@@ -9,6 +9,16 @@ and semantic versioning principles.
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject PI/PD configurations without physical fields or scalars in both
+  MATLAB and Python ([#4](https://github.com/cnr-inm-mao/pme-toolkit/issues/4),
+  reported by Kazuko Fuchi). Previously, default empty physics blocks could
+  let PI-PME run as geometry-only PME. Validation now runs before case data
+  loading/downloads and in direct fitting calls. Regression tests cover
+  invalid configurations, valid field-only/scalar-only cases, and standard
+  PME without physics.
+
 ### Planned
 
 - Synchronize website pages and docs text with the actual dual MATLAB/Python status of the repository

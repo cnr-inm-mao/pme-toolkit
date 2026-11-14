@@ -1,6 +1,7 @@
 function cfg = defaults(cfg)
 
 if ~isfield(cfg,'mode'), cfg.mode = "pme"; end
+pme.validate_physics_config(cfg);
 if ~isfield(cfg,'CI'), cfg.CI = 0.99; end
 if ~isfield(cfg,'baseline_col'), cfg.baseline_col = 1; end
 
@@ -16,7 +17,7 @@ if ~isfield(cfg.vars,'fixed_policy'), cfg.vars.fixed_policy = "baseline"; end
 if ~isfield(cfg.vars,'Urange'), cfg.vars.Urange = []; end
 if ~isfield(cfg.vars,'use_db_range_if_missing'), cfg.vars.use_db_range_if_missing = true; end
 
-% phys (optional)
+% phys (optional only for standard PME)
 if ~isfield(cfg,'phys'), cfg.phys = struct(); end
 if ~isfield(cfg.phys,'fields'), cfg.phys.fields = struct([]); end
 if ~isfield(cfg.phys,'scalars'), cfg.phys.scalars = struct([]); end

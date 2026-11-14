@@ -26,6 +26,7 @@ baseDir = fileparts(jsonFile);
 
 cfg = jsondecode(fileread(jsonFile));
 cfg = normalize_strings(cfg);
+pme.validate_physics_config(cfg);
 
 % ----------------------------
 % io defaults + resolve paths

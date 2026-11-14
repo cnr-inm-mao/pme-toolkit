@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import eig
 
-from .config_loader import load_case_json
+from .config_loader import load_case_json, validate_physics_config
 from .filters import apply_filters
 from .io import load_mat_database, load_mat_range
 from .layout import parse_layout
@@ -20,6 +20,7 @@ Array = NDArray[np.float64]
 
 
 def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
+    validate_physics_config(cfg)
     out = dict(cfg)
 
     out.setdefault("mode", "pme")

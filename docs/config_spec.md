@@ -121,6 +121,18 @@ Defines parametric design variables.
 
 Defines physical data used in PI-PME / PD-PME.
 
+For `mode: "pi"` or `mode: "pd"`, `phys` must contain at least one entry in
+`fields` or `scalars`. Either source type alone is sufficient. A missing,
+null, or empty `phys` block (including two empty source lists) raises a clear
+configuration error in both MATLAB and Python, before case data is loaded
+or downloaded. The same validation applies to direct fitting calls.
+
+For portable MATLAB/Python case files, include both `fields` and `scalars`
+lists, leaving any unused list empty. For geometry-only PME, select
+`mode: "pme"` and leave both lists empty. Direct fitting calls also accept
+PME configurations with `phys` omitted. PI/PD never silently fall back to
+geometry-only PME.
+
 ### Fields
 
 #### `fields`
