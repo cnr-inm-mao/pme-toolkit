@@ -11,7 +11,7 @@ from .config_loader import load_case_json, validate_physics_config
 from .filters import apply_filters
 from .io import load_mat_database, load_mat_range
 from .layout import parse_layout
-from .snapshot import snapshot_decompose
+from .snapshot import decompose
 from .weights import build_weights_diag
 
 import json
@@ -26,6 +26,7 @@ def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
 
     out.setdefault("mode", "pme")
     out.setdefault("CI", 0.95)
+    out.setdefault("solver", "auto")
     out.setdefault("baseline_col", 1)  # MATLAB-style default (1-based)
 
     out.setdefault("filters", {})
@@ -308,7 +309,7 @@ def _weighted_fit(
 
     w_diag, stats_w = build_weights_diag(delta, layout, cfg, uinfo, blocks)
 
-    snapshot = snapshot_decompose(pc, w_diag, cfg.get("snapshot"))
+    snapshot = decompose(pc, w_diag, cfg.get("snapshot"), cfg["solver"])
     stats_w["snapshot"] = snapshot["info"]
 
     return {

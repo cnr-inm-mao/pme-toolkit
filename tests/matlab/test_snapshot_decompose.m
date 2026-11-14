@@ -51,6 +51,23 @@ assert(norm(out.eigenvalues-changed_native.eigenvalues, inf) < 2e-13);
 assert(norm(out.sample_vectors*out.sample_vectors' - ...
     changed_native.sample_vectors*changed_native.sample_vectors', 'fro') < 1e-7);
 
+% The direct covariance and automatic selector preserve paired positive modes.
+direct = pme.direct_decompose(P, w, options);
+assert(norm(direct.eigenvalues-out.eigenvalues, inf) < 2e-13);
+assert(norm(direct.modes'*(w.*direct.modes)-eye(rank_exact),'fro') < 1e-12);
+assert(norm(direct.modes(Q+1:end,:)*direct.coordinates'-native_hat,'fro') < 1e-7);
+automatic = pme.decompose(P, w, options, 'auto');
+assert(strcmp(automatic.info.solver, 'snapshot'));
+assert(strcmp(automatic.info.solver_requested, 'auto'));
+small_rows = [1:2,Q+1:size(P,1)];
+automatic = pme.decompose(P(small_rows,:),w(small_rows),options,'auto');
+assert(strcmp(automatic.info.solver, 'direct'));
+assert(size(automatic.sample_vectors,2)==2);
+assert_error(@() pme.decompose(P,w,options,'unknown'),'pme:Solver');
+assert_error(@() pme.decompose(P,w,options,''),'pme:Solver');
+assert_error(@() pme.decompose(P,w,options,[]),'pme:Solver');
+assert_error(@() pme.decompose(P,w,options,1),'pme:Solver');
+
 % The target falls inside the repeated eigenvalue and must retain its cluster.
 [nconf, selected] = pme.choose_nconf(out.eigenvalues, 0.7, ...
     out.info.total_variance, 1e-10, out.info.eigenvalue_threshold);
@@ -77,6 +94,9 @@ large = pme.snapshot_decompose([1e154,-1e154], 1);
 assert(all(isfinite(large.modes(:))) && all(isfinite(large.coordinates(:))));
 assert(abs(large.eigenvalues/1e308-1) < 1e-13);
 assert(norm((large.modes*large.coordinates')/1e154-[1,-1]) < 1e-13);
+large_direct = pme.direct_decompose([1e154,-1e154], 1);
+assert(all(isfinite(large_direct.modes(:))) && all(isfinite(large_direct.coordinates(:))));
+assert(norm((large_direct.modes*large_direct.coordinates')/1e154-[1,-1]) < 1e-13);
 
 % Requested zero tolerances retain the numerical floor for a rank-one metric.
 x = (0:7)-3.5;

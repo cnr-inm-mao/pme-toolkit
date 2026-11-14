@@ -73,10 +73,14 @@ PME addresses these limitations by constructing a **low-dimensional embedding of
 - **JSON-driven workflows** for reproducibility  
 - **analytical backmapping** to original variables  
 - **weighted and physics-aware embeddings**  
-- **snapshot Gram formulation** in MATLAB and Python, with diagonal weights,
-  numerical-rank control and complete native-mode recovery
+- **direct and snapshot formulations** in MATLAB and Python, with automatic
+  solver selection, diagonal weights and numerical-rank control
+- **streamed observation readers**, compact native-variable models and
+  cross-Gram projection for data larger than memory
 - **cross-language regression testing** (MATLAB ↔ Python)  
-- benchmark-ready structure for **glider** and **airfoil** cases  
+- benchmark-ready structure for **glider** and **airfoil** cases
+- [complete Zenodo airfoil regression](docs/zenodo-regression.md) and a
+  [reproducible million-coordinate experiment](docs/reproducibility.md)
 
 See [Snapshot formulation](docs/snapshot.md) for the equations, numerical
 tolerances, model compatibility and memory limits of the 1.3.0 development

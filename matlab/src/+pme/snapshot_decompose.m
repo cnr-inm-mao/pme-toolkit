@@ -20,46 +20,16 @@ end
 if numel(w) ~= R
     error('pme:SnapshotWeights', 'The weight vector must have one entry per row of Pc.');
 end
-if ~isstruct(options) || ~isscalar(options)
-    error('pme:SnapshotOptions', 'snapshot options must be a scalar struct.');
-end
-eig_rtol_requested = option_value(options, 'eig_rtol', S*eps);
-eig_rtol = max(eig_rtol_requested, S*eps);
-eig_atol = option_value(options, 'eig_atol', 0);
-cluster_rtol = option_value(options, 'cluster_rtol', 1e-10);
-block_rows = option_value(options, 'block_rows', 4096);
-if block_rows < 1 || block_rows ~= floor(block_rows)
-    error('pme:SnapshotOptions', 'snapshot.block_rows must be a positive integer.');
-end
+opts = pme.decomposition_options(options, S);
+block_rows = opts.block_rows;
 
 K = zeros(S, S);
 for first = 1:block_rows:R
     rows = first:min(first + block_rows - 1, R);
-    block = Pc(rows, :);
-    K = K + (block' * (w(rows) .* block)) / S;
+    block = sqrt(w(rows)) .* (Pc(rows, :) / sqrt(S));
+    K = K + block' * block;
 end
-K = 0.5*K + 0.5*K';
-if any(~isfinite(K(:)))
-    error('pme:SnapshotOverflow', 'The weighted snapshot Gram matrix is not finite.');
-end
-total_variance = trace(K);
-if ~isfinite(total_variance)
-    error('pme:SnapshotOverflow', 'The total weighted snapshot variance is not finite.');
-end
-[A, lambda] = eig(K, 'vector');
-[lambda, order] = sort(real(lambda), 'descend');
-A = real(A(:, order));
-negative_tolerance = 100*S*eps*max(abs(lambda));
-if any(lambda < -negative_tolerance)
-    error('pme:SnapshotIndefinite', 'The weighted Gram matrix has significantly negative eigenvalues.');
-end
-threshold = max(eig_atol, eig_rtol * max(lambda(1), 0));
-resolved = lambda > threshold;
-if total_variance <= 0 || ~any(resolved)
-    error('pme:SnapshotRank', 'No resolved positive weighted variance remains at the requested tolerances.');
-end
-lambda = lambda(resolved);
-A = A(:, resolved);
+[A, lambda, info] = pme.resolved_eigensystem(K, S, options);
 
 % Fix signs without choosing a basis inside a repeated eigenspace.
 for k = 1:size(A, 2)
@@ -75,21 +45,7 @@ result.coordinates = A .* scales;
 if any(~isfinite(result.modes(:))) || any(~isfinite(result.coordinates(:)))
     error('pme:SnapshotOverflow', 'Snapshot mode lifting produced nonfinite values.');
 end
-result.info = struct('total_variance', total_variance, ...
-    'numerical_rank', numel(lambda), 'eig_rtol', eig_rtol, ...
-    'eig_rtol_requested', eig_rtol_requested, ...
-    'eig_atol', eig_atol, 'eigenvalue_threshold', threshold, ...
-    'cluster_rtol', cluster_rtol, 'block_rows', block_rows);
-end
-
-function value = option_value(options, name, fallback)
-if isfield(options, name)
-    value = options.(name);
-else
-    value = fallback;
-end
-if ~isnumeric(value) || ~isreal(value) || ~isscalar(value) || ~isfinite(value) || value < 0
-    error('pme:SnapshotOptions', 'snapshot.%s must be a finite nonnegative scalar.', name);
-end
-value = double(value);
+result.info = info;
+result.info.solver = 'snapshot';
+result.info.solver_requested = 'snapshot';
 end

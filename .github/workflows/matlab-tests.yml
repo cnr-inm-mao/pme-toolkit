@@ -10,6 +10,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      OPENBLAS_NUM_THREADS: "2"
+      OMP_NUM_THREADS: "2"
 
     steps:
       - name: Checkout repository
@@ -34,6 +37,23 @@ jobs:
             cd(repo);
             run(fullfile(repo,'tests','matlab','run_tests.m'));
             export_snapshot_parity(fullfile(getenv('RUNNER_TEMP'),'snapshot_parity.json'));
+            export_streaming_parity(fullfile(getenv('RUNNER_TEMP'),'streaming_parity.json'));
 
       - name: Compare current MATLAB and Python snapshot results
         run: python tests/python/compare_snapshot_parity.py "$RUNNER_TEMP/snapshot_parity.json"
+
+      - name: Compare streamed fits and million-coordinate native backmapping
+        run: |
+          python tests/python/compare_streaming_parity.py \
+            "$RUNNER_TEMP/streaming_parity.json" \
+            --output "$RUNNER_TEMP/streaming_comparison.json"
+
+      - name: Preserve cross-language numerical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streaming-parity
+          path: |
+            ${{ runner.temp }}/streaming_parity.json
+            ${{ runner.temp }}/streaming_comparison.json
+          if-no-files-found: ignore

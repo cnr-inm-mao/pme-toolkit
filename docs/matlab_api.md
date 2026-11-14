@@ -61,8 +61,28 @@ These provide a simplified interface to the same JSON-driven workflow:
 already centered data with samples in columns. Its result contains resolved
 eigenvalues, complete modes, training coordinates, sample eigenvectors and
 diagnostics. `pme.weights_diag` builds vector weights for the normal fitting
-path. See [Snapshot formulation](snapshot.md) for numerical options and
+path. `pme.direct_decompose(Pc, w, options)` exposes the equivalent symmetric
+observation covariance solver. `pme.decompose(Pc, w, options, solver)` accepts
+`'auto'`, `'direct'`, or `'snapshot'`; regular fitting uses `cfg.solver` with
+default `'auto'`. See [Snapshot formulation](snapshot.md) for numerical options and
 compatibility with legacy models.
+
+## Row-reader workflow
+
+```matlab
+model = pme.fit_streaming(reader, [Q,S], weights, native, ...
+    struct('block_rows',2048), 0.95);
+coordinates = pme.transform_streaming(model, reader, query_reader, T, weights);
+native_predictions = pme.backmap_streaming(model, coordinates);
+```
+
+Readers return raw observation rows using one-based, inclusive bounds
+`reader(first,last)`. The metric is a fixed vector or row reader. `native`
+is `M`-by-`S`, already prepared in the desired native coordinate system.
+Query coordinates are `T`-by-`N` and native predictions are `M`-by-`T`.
+An optional seventh argument, `mode_writer(first,last,modes)`, receives
+observation modes in a second pass. The default compact model stores no
+observation matrix or reader handles and can be saved using `save`.
 
 - MATLAB and Python implementations follow the same configuration structure  
 - JSON files define the full workflow  

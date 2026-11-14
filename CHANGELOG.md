@@ -15,13 +15,24 @@ and semantic versioning principles.
   MATLAB and Python, building on Antoine DeBlois's
   [PR #1](https://github.com/cnr-inm-mao/pme-toolkit/pull/1). The complete
   lifted modes retain the zero-weight native components used by backmapping.
-- Vector weight storage and bounded row-block Gram assembly in the fitting
-  paths, avoiding dense state covariance and weight matrices. The complete
-  construction data remain in memory.
+- Vector weight storage and bounded row-block Gram assembly, avoiding dense
+  weight matrices. The regular case workflow keeps construction data in memory.
+- `solver="auto"|"direct"|"snapshot"` in both languages. The default `auto`
+  chooses the smaller symmetric eigenproblem; direct fitting operates only
+  on positive-weight observation rows and recovers native modes separately.
+- True row-reader snapshot fitting, native-only compact models, optional
+  observation-mode writers, and cross-Gram query projection in both languages.
+  Streaming centers each observation using the construction samples and keeps
+  the source metric fixed across storage blocks.
 - Shared `snapshot` options for numerical rank, absolute and relative
   eigenvalue cutoffs, repeated-eigenvalue clusters and row-block size.
 - Controlled-spectrum direct-reference tests and a common PME/PI/PD fixture
   for comparison of current MATLAB and Python outputs in CI.
+- Regression against the unchanged pre-snapshot implementation on the complete
+  Zenodo airfoil database, covering PME, PI-PME and PD-PME, with actual MATLAB
+  and Python comparison in a dedicated workflow.
+- A reproducible manuscript verification driver and shared curve inputs for
+  the 1,048,576-coordinate streamed fit and analytical native backmapping.
 
 ### Changed
 
@@ -53,11 +64,13 @@ and semantic versioning principles.
 
 ### Scope
 
-- This release provides the production in-memory snapshot backend. Streaming
-  dataset loading, native-only model storage, and cross-Gram query encoding
-  from independent research implementations are not exposed here.
+- The standard case loader continues to read its database into memory. The
+  advanced streaming API accepts replayable observation and weight readers,
+  so procedural, mapped, or file-backed data can be processed without loading
+  the complete observation matrix. Source-specific normalization is fixed
+  before fitting, using a preliminary pass when needed.
 - See [Snapshot formulation](docs/snapshot.md) for equations, compatibility
-  changes, conditioning and the `O(RS + S^2)` storage model.
+  changes, conditioning, solver selection, and the two storage models.
 
 ### Planned
 

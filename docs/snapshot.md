@@ -1,9 +1,46 @@
 # Snapshot formulation
 
-Version 1.3.0 computes PME, PI-PME and PD-PME using a symmetric eigenproblem in
-sample space in both MATLAB and Python. This develops the Python implementation
+Version 1.3.0 provides direct and snapshot symmetric eigensolvers for PME,
+PI-PME and PD-PME in both MATLAB and Python. The snapshot solver develops the Python implementation
 contributed by Antoine DeBlois in
 [pull request #1](https://github.com/cnr-inm-mao/pme-toolkit/pull/1).
+
+## Solver selection
+
+The case configuration accepts `solver`:
+
+| Value | Eigenproblem | When it is useful |
+|---|---|---|
+| `auto` (default) | Chooses the smaller symmetric problem | Normal case workflows |
+| `snapshot` | Sample Gram matrix, $S\times S$ | More observation rows than construction samples |
+| `direct` | Weighted observation covariance, $Q_+\times Q_+$ | Fewer positive-weight observation rows than construction samples |
+
+Here $Q_+$ counts rows with positive metric weight; native rows do not increase
+the direct eigenproblem. `auto` chooses direct when $Q_+<S$, otherwise snapshot.
+For a matched numerical comparison, explicitly run both choices on the same data
+and configuration. The selected solver, requested solver and matrix dimension
+are recorded under the existing `stats_w["snapshot"]` / `statsW.snapshot`
+diagnostics. The `snapshot` options object supplies the numerical tolerances
+for both solvers.
+
+The direct path solves $BB^\mathsf{T}/S$, with
+$B=\operatorname{diag}(\sqrt{w_+})P_{c,+}$, and obtains the paired native modes
+from its sample coefficients. It preserves the direct PME formulation without
+reintroducing the old dense diagonal weights or nonsymmetric augmented operator.
+The previous implementation remains available in version history and is used
+as an independent regression baseline.
+
+```json
+{
+  "solver": "auto",
+  "snapshot": {
+    "eig_rtol": 1e-12,
+    "eig_atol": 0,
+    "cluster_rtol": 1e-10,
+    "block_rows": 2048
+  }
+}
+```
 
 ## Data and metric
 
@@ -101,20 +138,127 @@ the numerical rank, rather than the number of state rows or samples.
 `lam_cum_ninf` remains a report compatibility alias for the trace-normalized
 `retained_variance` values.
 
+## Streamed observations and compact native models
+
+The standard case loader keeps the database in memory. For observations stored
+on disk or generated in blocks, both languages also expose `fit_streaming`,
+`transform_streaming` and `backmap_streaming`. This path always uses the snapshot
+eigenproblem and reads at most `block_rows` observation rows at a time.
+
+The fitting inputs are a repeatable observation reader, the shape $(Q,S)$,
+fixed effective weights, and paired native data with shape $(M,S)$. The native
+array is supplied separately; do not append its rows to the observation reader.
+For PME the reader supplies geometry; for PI-PME it supplies geometry, fields
+and scalars; for PD-PME it supplies fields and scalars. Row ordering, sample IDs,
+units and weights must remain identical on every pass.
+
+Weights can be a vector or a reader. They must include any quadrature, source
+balancing or variance normalization before fitting. A source variance can be
+accumulated in a preliminary pass over that entire source. Normalizing each
+storage block independently changes the metric and is not equivalent.
+
+The reader returns raw observations. The fit subtracts construction means
+rowwise, accumulates the complete Gram matrix, selects complete resolved
+eigenspaces, and returns the selected sample coefficients, construction
+coordinates and native modes. It does not retain the observation matrix, its
+modes, its row means or the readers. Native scaling and active-variable selection
+are the caller's responsibility in this lower-level interface; backmapping
+returns the same native units that were supplied, without clipping.
+
+### Python
+
+Python readers use zero-based, half-open bounds. A reader backed by a NumPy
+memory map can be used as follows:
+
+```python
+import numpy as np
+from pme_toolkit import fit_streaming, transform_streaming, backmap_streaming
+
+observations = np.load("observations.npy", mmap_mode="r")  # Q by S
+native = np.load("native.npy")  # M by S, paired construction designs
+weights = np.load("weights.npy", mmap_mode="r")  # Q effective weights
+reader = lambda start, stop: observations[start:stop, :]
+
+model = fit_streaming(
+    reader, observations.shape, weights, native,
+    {"block_rows": 2048, "eig_rtol": 1e-12}, ci=0.99,
+)
+construction_native = backmap_streaming(model, model["coordinates"])
+
+queries = np.load("queries.npy", mmap_mode="r")  # same Q rows, T queries
+query_reader = lambda start, stop: queries[start:stop, :]
+coordinates = transform_streaming(
+    model, reader, query_reader, queries.shape[1], weights,
+)
+query_native = backmap_streaming(model, coordinates)  # M by T
+```
+
+### MATLAB
+
+MATLAB readers use one-based, inclusive bounds. With a caller-defined disk or
+generator reader, the equivalent calls are:
+
+```matlab
+% reader(first,last) returns (last-first+1)-by-S raw observations.
+% weights is a Q-vector or weights(first,last) returns matching row weights.
+options = struct('block_rows', 2048, 'eig_rtol', 1e-12);
+model = pme.fit_streaming(reader, [Q,S], weights, native, options, 0.99);
+construction_native = pme.backmap_streaming(model, model.coordinates);
+coordinates = pme.transform_streaming(model, reader, query_reader, T, weights);
+query_native = pme.backmap_streaming(model, coordinates);  % M by T
+```
+
+Coordinates use one design per row in both implementations. Readers and native
+inputs use one design per column. The compact model fields have the same names
+in MATLAB and Python: `shape`, `eigenvalues`, `sample_vectors`, `lifting`,
+`coordinates`, `native_mean`, `native_modes`, `nconf` and `info`.
+`eigenvalues` contains the full resolved spectrum; the sample factors and native
+modes contain the selected `nconf` columns.
+
+### Optional observation modes and query projection
+
+An optional `mode_writer(first,last,modes)` callback receives selected
+observation modes in a second pass. In Python its bounds are instead
+`(start,stop)` and half-open, as for the reader. The writer can store each block
+on disk without accumulating a full $Q\times N$ array. `info.observation_passes`
+records whether the fitting call used one or two passes.
+
+When observation modes are omitted, new observations are encoded using a
+cross-Gram product. For a query $g=h-\bar h$,
+
+$$
+k=\frac{1}{S}H^\mathsf{T}Wg,
+\qquad
+x_j=\sqrt{\frac{S}{\lambda_j}}\,a_j^\mathsf{T}k.
+$$
+
+`transform_streaming` rereads construction blocks and reconstructs their means;
+it always uses those means to center the queries. The construction reader and
+weights must be the same as in the fit. Encoding physical observations still
+requires those observations to be available for the query. Choosing reduced
+coordinates directly and applying the native backmap requires only the compact
+model.
+
 ## Storage and scope
 
-The working storage is $O(RS+S^2)$, plus the returned modes, with at most
-$O(bS)$ temporary weighted storage for a row-block size $b$. No dense
-$R\times R$ covariance or weight matrix is allocated by the fitting path.
-The main advantage is for many more observation rows than samples; a large
-sample count still makes the dense $S\times S$ eigensolve expensive.
+The resident snapshot fit uses $O(RS+S^2)$ working storage, plus the returned
+modes, with $O(bS)$ temporary block storage. The direct fit instead uses the
+$Q_+\times Q_+$ observation covariance. Neither solver builds a dense weight
+matrix.
 
-The production case loader and centered construction data remain in memory.
-Row-block Gram assembly is not an out-of-core dataset loader. A streaming
-observation provider, native-only model storage and cross-Gram query encoding
-are not exposed by this release. Experiments from a separate research
-implementation should not be attributed to the toolkit without rerunning
-them on the released version.
+The streamed native fit uses $O(bS+S^2+MS+SN+MN)$ storage and retains no full
+observation array. A caller-supplied weight vector adds $O(Q)$ storage; a weight
+reader avoids it. An optional mode writer determines where the $Q\times N$
+output is stored. Query encoding adds a $T\times S$ cross-Gram matrix and
+blocks with at most $bT$ entries. A large sample count remains expensive because
+the Gram matrix and its dense eigensolve still depend on $S$.
+
+The controlled manuscript driver in `benchmarks/snapshot/verify_manuscript.py`
+uses these public toolkit APIs for the prescribed spectrum, geometric
+regeneration, conditioning checks and a native-only run with 1,048,576
+coordinates. Its saved outputs identify the actual source files, environment
+and input protocol; earlier results from separate research scripts are not
+silently relabelled as toolkit results.
 
 See [Reproducibility](reproducibility.md) for the direct-reference tests and
 the comparison of current MATLAB and Python results.

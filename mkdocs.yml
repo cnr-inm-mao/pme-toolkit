@@ -24,6 +24,7 @@ nav:
       - Benchmarks: benchmarks.md
       - Datasets: datasets.md
       - Reproducibility: reproducibility.md
+      - Zenodo regression: zenodo-regression.md
 
   - Backmapping:
       - Overview: backmapping.md

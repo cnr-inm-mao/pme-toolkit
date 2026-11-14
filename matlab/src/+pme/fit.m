@@ -66,11 +66,11 @@ delta   = P - P0;
 delta_m = mean(delta, 2);
 Pc      = delta - delta_m;
 
-% ---- vector weights + snapshot eigenproblem ----
+% ---- vector weights + direct or snapshot eigenproblem ----
 [W, statsW] = pme.weights_diag(delta, layout, cfg, Uinfo, blocks);
 snapshot_options = struct();
 if isfield(cfg, 'snapshot'), snapshot_options = cfg.snapshot; end
-snapshot = pme.snapshot_decompose(Pc, W, snapshot_options);
+snapshot = pme.decompose(Pc, W, snapshot_options, cfg.solver);
 L = snapshot.eigenvalues;
 Zn = snapshot.modes;
 [nconf, selection] = pme.choose_nconf(L, cfg.CI, ...

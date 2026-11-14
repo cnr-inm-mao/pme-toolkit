@@ -11,6 +11,7 @@ This page documents the **actual configuration schema** used by the toolkit.
 
     {
       "mode": "pi",
+      "solver": "auto",
       "CI": 0.95,
       "baseline_col": 0,
       "geom": { ... },
@@ -50,9 +51,24 @@ boundary intersects a repeated eigenvalue cluster, the whole cluster is kept.
 If the resolved spectrum cannot reach the requested `CI`, all resolved modes
 are retained and a warning reports the achieved fraction.
 
+### `solver` (optional)
+
+Type: string, default `"auto"`.
+
+- `"auto"`: solve the smaller symmetric eigenproblem. Use the direct
+  covariance when the number of positive-weight observation rows is smaller
+  than the sample count; use the snapshot Gram otherwise.
+- `"direct"`: explicitly solve the positive-weight observation covariance.
+- `"snapshot"`: explicitly solve the sample-space Gram matrix.
+
+Both formulations use the same fixed weights, positive-rank cutoff, complete
+eigenvalue clusters, trace-based confidence criterion, and native backmap.
+The selected solver and its matrix dimension are reported in the model
+diagnostics. The separate `fit_streaming` API always uses snapshot assembly.
+
 ### `snapshot` (optional)
 
-The same solver options are accepted in MATLAB and Python:
+The same numerical options apply to both solvers in MATLAB and Python:
 
 | Field | Default | Meaning |
 | --- | --- | --- |
