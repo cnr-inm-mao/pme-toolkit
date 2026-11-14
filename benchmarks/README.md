@@ -1,34 +1,27 @@
 # Benchmarks
 
-This directory contains the **benchmark definitions** used to run PME-toolkit workflows for:
+This directory contains **benchmark definitions and verification drivers** for
+**PME**, **PI-PME** and **PD-PME** on the supported shape-optimization datasets
+and controlled synthetic inputs.
 
-- **PME**
-- **PI-PME**
-- **PD-PME**
-
-on the supported shape-optimization datasets.
-
-Benchmarks are defined through **JSON configuration files** and are compatible with both **MATLAB and Python implementations**.
+Dataset benchmarks are defined through **JSON configuration files** and are
+compatible with both **MATLAB and Python implementations**.
 
 ---
 
 ## Structure
 
-Benchmarks are organized by:
+Dataset cases are organized by **dataset-selection strategy** and **method
+family** (`pme/`, `pi_pme/` or `pd_pme/`).
 
-1. **dataset-selection strategy**
-2. **method family**
+| Directory | Contents |
+|---|---|
+| `standard/` | Standard PME, PI-PME and PD-PME dataset cases |
+| `goal_oriented/` | Goal-oriented PI-PME and PD-PME dataset cases |
+| [`snapshot/`](snapshot/README.md) | Versioned driver for controlled direct, snapshot and streaming experiments |
+| `results/` | Generated local reports; created on demand and excluded from Git |
 
-    benchmarks/
-    ├── standard/
-    │   ├── pme/
-    │   ├── pi_pme/
-    │   └── pd_pme/
-    └── goal_oriented/
-        ├── pi_pme/
-        └── pd_pme/
-
-Each leaf folder corresponds to a specific **benchmark case** and typically contains:
+Each dataset case folder typically contains:
 
 - one or more `case.json` files  
 - optional `backmapping.json` configurations  
@@ -94,6 +87,18 @@ included in a case directory and supply their required reduced coordinates.
 See [Snapshot formulation](../docs/snapshot.md) for the streamed reader API and
 [Zenodo regression](../docs/zenodo-regression.md) for the complete airfoil
 comparison against the preceding implementation.
+
+## Controlled experiments and outputs
+
+The [snapshot verification driver](snapshot/README.md) calls the public toolkit
+APIs and uses the fixed input in `tests/data/snapshot_curve.json`. The driver,
+input and execution instructions are versioned so that experiments can be
+repeated with the corresponding toolkit revision.
+
+Generated reports under `benchmarks/results/` are local outputs and must not be
+committed. A selected reference report can be published as a release attachment
+after running the documented protocol on that exact source revision. Preserve
+its recorded revision, source hashes, environment and measured quantities.
 
 ---
 

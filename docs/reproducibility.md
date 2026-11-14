@@ -87,13 +87,19 @@ configured block size and that one fitting pass reads every row exactly once.
 
 ## Controlled manuscript experiments
 
-Run the toolkit verification driver from the repository root after installing
-the Python package:
+Run the toolkit verification driver from the repository root, using the Python
+package installed from that checkout:
 
 ```bash
+python -m pip install -e ./python
 python benchmarks/snapshot/verify_manuscript.py \
   --output benchmarks/results/snapshot_manuscript.json
 ```
+
+The driver and the fixed native-input fixture are versioned. The report is a
+generated local output: `benchmarks/results/` is created on demand and excluded
+from Git. Each run overwrites the requested output file; choose a different
+`--output` path to preserve multiple runs.
 
 The driver calls the public `direct_decompose`, `snapshot_decompose`,
 `fit_streaming`, `transform_streaming` and `backmap_streaming` APIs. It performs
@@ -132,6 +138,12 @@ interpreter, imported libraries, inputs and temporary arrays without carrying
 allocations from the preceding experiments. Analytical array sizes are reported
 separately. Timings are single observations from that environment, not a repeated
 performance study or measurements of file I/O.
+
+For a release or manuscript reference, run this protocol on the exact source
+revision being cited, with a clean working tree, and publish the selected report
+as a release attachment. Preserve its recorded provenance and measurements.
+Report publication is a separate step from running the driver; routine local
+outputs should remain unversioned.
 
 Use `--skip-large` to run only the smaller checks, or `--large-rows Q` to change
 the streamed resolution. These arguments are recorded through the output
