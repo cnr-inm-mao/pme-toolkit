@@ -23,7 +23,11 @@ These provide a small workflow that does not require an external dataset.
 
 ### Python
 
-    pytest tests/python -q
+    pytest tests/python -q --ignore=tests/python/test_run_case.py
+
+The excluded integration test uses the complete external glider database.
+Run `pytest tests/python -q` to include it; that run can download the benchmark
+archive. The tiny fixture and the remaining local tests need no external data.
 
 ## Direct and snapshot validation
 
@@ -150,12 +154,12 @@ These datasets are:
 - distributed via Zenodo
 - referenced by benchmark configuration files
 
-To reproduce an existing benchmark case:
-
-1. download the dataset from Zenodo  
-2. place it locally  
-3. update the `dbfile` path in the configuration  
-4. run the benchmark  
+Run a supplied `benchmarks/**/case.json` with either case runner. Missing data
+are obtained from the matching `databases/<name>/dataset.json` metadata. For a
+manual download, extract the archive and set the configuration paths relative
+to its case directory. The examples explicitly set `solver="auto"`; existing
+inputs that omit the field still default to that choice. Set `direct` and
+`snapshot` explicitly when comparing their numerical results on the same case.
 
 ### Zenodo regression against the preceding implementation
 
@@ -177,7 +181,9 @@ artifacts. This full-dataset check is separate from the small unit suite.
 
 ## Configuration-driven workflow
 
-All experiments are defined through JSON configuration files.
+Standard case experiments use JSON configuration files. The controlled
+streaming experiments use the versioned verification driver and the explicit
+native-sample fixture described above.
 
 This ensures:
 

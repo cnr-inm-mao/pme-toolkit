@@ -21,6 +21,9 @@ Ns = size(DB,2);
 mask = true(1,Ns);
 info = struct();
 info.Ns_total = Ns;
+if ~isfield(cfg,'baseline_col'), cfg.baseline_col = 1; end
+validateattributes(cfg.baseline_col, {'numeric'}, ...
+    {'real','finite','scalar','integer','>=',1,'<=',Ns}, mfilename, 'baseline_col');
 
 %% ---------------- Defaults ----------------
 if ~isfield(cfg,'filters') || isempty(cfg.filters)
@@ -138,6 +141,12 @@ if isfield(g,'enable') && g.enable
             % Work on current DB slice
             idxKept = find(mask);
             DBcur = DB(:, idxKept);
+            validateattributes(baseline_col, {'numeric'}, ...
+                {'real','finite','scalar','integer','>=',1,'<=',Ns}, mfilename, 'goal.baseline_col');
+            baseline_col = find(idxKept == baseline_col, 1);
+            if isempty(baseline_col)
+                error('pme:GoalBaseline', 'Goal baseline column was removed by an earlier filter.');
+            end
 
             keep = true(1, size(DBcur,2));
 

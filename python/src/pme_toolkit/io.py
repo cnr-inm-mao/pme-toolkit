@@ -27,6 +27,35 @@ def load_mat_database(path: str | Path) -> np.ndarray:
     return np.asarray(db, dtype=float)
 
 
+def orient_database(
+    db: np.ndarray, expected_rows: int, transpose_if: str = "auto"
+) -> np.ndarray:
+    """Orient a loaded matrix using the case layout and the configured policy.
+
+    ``auto`` keeps a matching row count or transposes a matching column count.
+    ``always`` transposes once; ``never`` preserves the supplied orientation,
+    including extra rows that are not used by the configured layout.
+    """
+    matrix = np.asarray(db)
+    if matrix.ndim != 2:
+        raise ValueError("Database must be a two-dimensional matrix")
+    if not isinstance(transpose_if, str) or transpose_if.lower() not in (
+        "auto", "always", "never"
+    ):
+        raise ValueError("io.transpose_if must be 'auto', 'always', or 'never'")
+    policy = transpose_if.lower()
+    if policy == "always":
+        return matrix.T
+    if policy == "never" or matrix.shape[0] == expected_rows:
+        return matrix
+    if matrix.shape[1] == expected_rows:
+        return matrix.T
+    raise ValueError(
+        f"DB shape {matrix.shape} does not match layout.totalRows={expected_rows}; "
+        "check the geometry, variable and physics layout or io.transpose_if"
+    )
+
+
 def load_mat_range(path: str | Path) -> np.ndarray:
     """Load the variable range matrix [M x 2] from a MATLAB .mat file.
 

@@ -33,6 +33,9 @@ Backmapping is defined through a dedicated JSON file with the following structur
 Type: string  
 
 Path to the original configuration file used to generate the model.
+It is resolved relative to the backmapping JSON file. Paths under `input`,
+`output` and the optional `run_case.model_file` are instead resolved relative
+to the referenced fitting case directory.
 
 This is required to:
 
@@ -43,7 +46,8 @@ This is required to:
 
 ## Input (`input`)
 
-Defines the reduced coordinates.
+Defines a single vector of normalized reduced coordinates `x01`, with every
+component in `[0,1]`. The standalone workflow processes one design per call.
 
 ### Fields
 
@@ -57,12 +61,14 @@ Defines the reduced coordinates.
 
 ## Reduced space (`reduced_space`)
 
-Defines how many configurations are processed.
+Selects how many leading modes of the saved model are used for this backmap.
 
 ### Fields
 
 - `nconf` (int)  
-  Number of configurations to backmap
+  Number of reduced coordinates, between one and the model's retained
+  dimension. If omitted, all retained modes are used. The input vector must
+  have exactly this many entries; this field is not a sample count.
 
 ---
 
@@ -74,7 +80,10 @@ Controls how reduced variables are mapped back.
 
 - `rule` (string)  
 
-    `"3sigma"` → scaling based on standard deviation
+    `"3sigma"` → map each normalized coordinate to
+    `[-c*sqrt(lambda), +c*sqrt(lambda)]`
+
+    `"minmax"` → map to that reduced coordinate's observed training range
 
 - `c` (float)  
 
@@ -96,12 +105,21 @@ Defines output file and format.
 
 - `layout` (string)  
 
-    `"col"` → column-wise output  
-    `"row"` → row-wise output  
+    `"col"` → one CSV column
+    `"row"` → one CSV row
+
+    Text output always writes one value per line.
 
 - `what` (string)
 
-    `"Ubase"` → reconstructed baseline variables  
+    `"Ubase"` → full reconstructed design vector in original units, with
+    fixed variables reinserted at their baseline values
+
+    `"Uact"` → active reconstructed variables in original units
+
+    `"P"` → reconstructed augmented vector in the model's prepared coordinates
+
+    `"alpha"` → denormalized reduced coordinates
 
 - `write_meta` (bool)  
   Write additional metadata
@@ -110,7 +128,9 @@ Defines output file and format.
 
 ## Notes
 
-- input reduced coordinates must match the dimensionality of the trained model  
+- the fitting run must first save `model.npz` (Python) or `model.mat` (MATLAB)
+- no solver field is required here: backmapping uses the saved basis
+- input reduced coordinates must match the selected `reduced_space.nconf`
 - denormalization depends on the original dataset statistics  
 - the backmapping process reconstructs design variables consistent with the training space  
 

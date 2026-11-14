@@ -1,5 +1,6 @@
 {
   "mode": "pme",
+  "solver": "auto",
   "CI": 0.99,
   "baseline_col": 0,
   "geom": {
@@ -29,6 +30,6 @@
     "dbfile": "../data/glider_tiny.mat",
     "transpose_if": "never",
     "outdir": "results",
-    "save_model": false
+    "save_model": true
   }
 }

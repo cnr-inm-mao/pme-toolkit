@@ -11,6 +11,7 @@ cleanup = onCleanup(@() rmdir(temporary, 's')); %#ok<NASGU>
 for mode = ["pme", "pi", "pd"]
     cfg = fixture.cfg;
     cfg.mode = mode;
+    cfg.baseline_col = cfg.baseline_col + 1; % Fixture configuration uses JSON indices.
     model = pme.fit(DB, cfg);
     assert(strcmp(model.version, '1.3.0'));
     assert(iscolumn(model.W));

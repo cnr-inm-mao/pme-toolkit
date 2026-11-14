@@ -7,9 +7,9 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from .config_loader import load_case_json, validate_physics_config
+from .config_loader import _baseline_col_zero_based, load_case_json, validate_physics_config
 from .filters import apply_filters
-from .io import load_mat_database, load_mat_range
+from .io import load_mat_database, load_mat_range, orient_database
 from .layout import parse_layout
 from .snapshot import decompose
 from .weights import build_weights_diag
@@ -25,15 +25,16 @@ def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
     out = dict(cfg)
 
     out.setdefault("mode", "pme")
-    out.setdefault("CI", 0.95)
+    out.setdefault("CI", 0.99)
     out.setdefault("solver", "auto")
-    out.setdefault("baseline_col", 1)  # MATLAB-style default (1-based)
+    out.setdefault("baseline_col", 0)
 
     out.setdefault("filters", {})
     out.setdefault("io", {})
     out.setdefault("phys", {})
     out.setdefault("geom", {})
-    out.setdefault("vars", {})
+    out["vars"] = dict(out.get("vars", {}) or {})
+    out["vars"].setdefault("use_db_range_if_missing", True)
 
     out["phys"].setdefault("fields", [])
     out["phys"].setdefault("scalars", [])
@@ -120,6 +121,8 @@ def _prepare_vars(
     ubase: Array,
     cfg: dict[str, Any],
     urange_full: Array | None,
+    *,
+    baseline_col: int = 0,
 ) -> tuple[Array, dict[str, Any]]:
     vars_cfg = dict(cfg.get("vars", {}) or {})
     mbase = int(vars_cfg["Mbase"])
@@ -136,7 +139,7 @@ def _prepare_vars(
     uraw_act = ubase[idx_active, :]
 
     if urange_full is None:
-        if bool(vars_cfg.get("use_db_range_if_missing", False)):
+        if bool(vars_cfg.get("use_db_range_if_missing", True)):
             urange_full = np.column_stack(
                 [np.min(ubase, axis=1), np.max(ubase, axis=1)]
             )
@@ -155,7 +158,7 @@ def _prepare_vars(
             "Urange": None,
             "Urange_full": None,
             "Urange_source": urange_source,
-            "Ubase_baseline_raw": np.asarray(ubase[:, 0], dtype=float),
+            "Ubase_baseline_raw": np.asarray(ubase[:, baseline_col], dtype=float),
         }
 
     urange_full = np.asarray(urange_full, dtype=float)
@@ -198,7 +201,7 @@ def _prepare_vars(
         "Urange_source": urange_source,
         "min_after_clip": float(np.min(uact)),
         "max_after_clip": float(np.max(uact)),
-        "Ubase_baseline_raw": np.asarray(ubase[:, 0], dtype=float),
+        "Ubase_baseline_raw": np.asarray(ubase[:, baseline_col], dtype=float),
     }
 
 
@@ -228,19 +231,6 @@ def _compose_p(mode: str, d: Array, uact: Array, f: Array, c: Array) -> Array:
         return np.vstack(blocks)
 
     raise ValueError(f"Unknown mode: {mode}")
-
-
-def _baseline_col_zero_based(cfg: dict[str, Any], ns: int) -> int:
-    """
-    MATLAB-style baseline_col is 1-based.
-    Allow also Python-style 0-based for robustness.
-    """
-    bc = int(cfg.get("baseline_col", 1))
-    if 1 <= bc <= ns:
-        return bc - 1
-    if 0 <= bc < ns:
-        return bc
-    raise ValueError(f"baseline_col={bc} out of range for {ns} samples")
 
 
 def _baseline_col_local(cfg: dict[str, Any], filter_mask: Array, ns_local: int) -> int:
@@ -545,11 +535,12 @@ def fit_model(
         if db_total_shape is None:
             db_total_shape = tuple(db.shape)
 
+    baseline_col = _baseline_col_local(cfg, filter_mask, db_fit.shape[1])
     blocks = _slice_blocks(db_fit, layout)
-    uact, uinfo = _prepare_vars(blocks["Ubase"], cfg, urange_full)
+    uact, uinfo = _prepare_vars(
+        blocks["Ubase"], cfg, urange_full, baseline_col=baseline_col,
+    )
     p = _compose_p(mode, blocks["D"], uact, blocks["F"], blocks["C"])
-
-    baseline_col = _baseline_col_local(cfg, filter_mask, p.shape[1])
 
     weighted = _weighted_fit(
         p,
@@ -656,7 +647,10 @@ def fit_from_case(case_json: str | Path) -> PmeModel:
     if not dbfile:
         raise ValueError("cfg.io.dbfile is required")
 
-    db = load_mat_database(dbfile)
+    db = orient_database(
+        load_mat_database(dbfile), int(parse_layout(cfg)["totalRows"]),
+        io_cfg.get("transpose_if", "auto"),
+    )
 
     urange_file = vars_cfg.get("Urange_file")
     urange = load_mat_range(urange_file) if urange_file else None

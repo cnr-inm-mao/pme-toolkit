@@ -40,6 +40,12 @@ filterInfo = struct();
 
 if opts.apply_filters && isfield(cfg,'filters')
     [DB_used, filterInfo, mask] = pme.filters(DB, cfg, layout);
+    kept_columns = find(mask);
+    baseline_local = find(kept_columns == cfg.baseline_col, 1);
+    if isempty(baseline_local)
+        error('pme:Baseline', 'Baseline column was removed by filtering.');
+    end
+    cfg.baseline_col = baseline_local;
 end
 
 % ---- build P-space ----

@@ -11,13 +11,18 @@ PME-toolkit can be used in two ways:
 
 ## Python (recommended)
 
-### Option A — Try PME-toolkit in 2 minutes
+### Option A — Run the self-contained reference case
 
 Clone the repository to access ready-to-run benchmark cases:
 
     git clone https://github.com/cnr-inm-mao/pme-toolkit.git
     cd pme-toolkit
-    pip install -e .
+    git switch release/1.3.0-snapshot
+    python -m pip install -e ./python
+
+The branch selection above installs the v1.3.0 candidate, including `auto`,
+`direct`, `snapshot` and streaming. For a published release, select its tag
+instead; released versions are listed on the repository's Releases page.
 
 Run a reference case:
 
@@ -43,7 +48,9 @@ Run backmapping:
 
     pme-back your_backmapping_config.json
 
-See the *Input Format* section for details on how to define datasets and variables.
+The package installed from PyPI follows its published version. Use the source
+checkout above for the v1.3.0 candidate. See [Input data](input_data.md) and
+[Configuration](config_spec.md) for dataset and variable definitions.
 
 ---
 
@@ -70,7 +77,25 @@ Running the example produces:
 - reduced coordinates  
 - variance and mode information  
 - reconstruction error metrics  
-- output files in the `results/` directory  
+- output files under `tests/cases/results/` for this reference configuration
+
+The saved outputs include `report.mat` and a model file (`model.npz` in Python,
+`model.mat` in MATLAB), together with diagnostic plots. Backmapping reads the
+saved model from the preceding run.
+
+## Solver choice
+
+The reference case and benchmark inputs explicitly include:
+
+```json
+"solver": "auto"
+```
+
+This selects the smaller of the direct observation covariance and snapshot
+Gram problems. Set `"direct"` or `"snapshot"` to select a particular solver.
+Existing fit inputs that omit `solver` remain valid and default to `"auto"`
+in both languages. No solver field is needed in a backmapping configuration.
+See [Solver selection](snapshot.md#solver-selection) for the numerical contract.
 
 ---
 
@@ -80,3 +105,6 @@ Running the example produces:
 - JSON configuration files define the full workflow  
 - ready-to-run examples are available in the repository under `tests/cases/`  
 - for full benchmark workflows, see the *Benchmarks* and *Datasets* sections  
+- the regular case runner loads the database into memory even when
+  `solver="snapshot"`; use the [row-reader API](snapshot.md#streamed-observations-and-compact-native-models)
+  for streamed observation data

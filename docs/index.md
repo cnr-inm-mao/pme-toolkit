@@ -20,15 +20,21 @@ The toolkit provides a **reproducible, data-driven workflow** to construct low-d
 
 ## Project status
 
-PME-toolkit is a **released research software package (v1.2)**:
+This documentation covers the **v1.3.0 APIs** in MATLAB and Python, including
+direct and snapshot eigensolvers and the advanced streamed observation API.
+Published software versions and archives are available through:
 
 - [PyPI package (installable)](https://pypi.org/project/pme-toolkit/)
 - [Zenodo archive (versioned, citable)](https://doi.org/10.5281/zenodo.18962859)
 - [GitHub repository](https://github.com/cnr-inm-mao/pme-toolkit)
-- submitted to JOSS (under review)
+- [GitHub releases](https://github.com/cnr-inm-mao/pme-toolkit/releases)
 
 The Python implementation is fully functional and recommended for use.  
 MATLAB remains available as a reference implementation for validation and comparison.
+While v1.3.0 is being prepared, its new APIs require the corresponding source
+checkout; the existing PyPI release does not yet provide them. See
+[Quickstart](quickstart.md) for installation and [Reproducibility](reproducibility.md)
+for the validation protocols.
 
 ---
 
@@ -60,13 +66,18 @@ A typical PME workflow consists of:
 
 PME-toolkit is designed for **reproducible benchmarking across methods and datasets**.
 
-Validated on:
+The repository includes:
 
-- a **tiny self-contained glider case** (included in the repository)  
-- **benchmark configurations** for airfoil and underwater glider geometries  
-- **larger datasets** available via Zenodo  
+- a **tiny self-contained glider case** used by the local tests;
+- benchmark configurations for airfoil, underwater glider and propeller data;
+- a [complete Zenodo airfoil regression](zenodo-regression.md) for PME, PI-PME
+  and PD-PME, comparing the preceding implementation and both current languages;
+- [controlled streamed experiments](reproducibility.md) up to 1,048,576
+  observation coordinates.
 
-All workflows are defined through **JSON configuration files**, ensuring full reproducibility of experiments.
+Standard case workflows are defined through JSON files. The advanced streaming
+API accepts explicit observation readers, fixed weights and prepared native
+variables; its reproducible examples include the required reader definitions.
 
 ---
 
@@ -75,11 +86,19 @@ All workflows are defined through **JSON configuration files**, ensuring full re
 PME-toolkit extends classical PCA-based approaches through a **generalized, weighted formulation** tailored to parametric design problems.
 
 - **Analytical backmapping (core feature)**  
-  Reduced coordinates can be mapped back exactly to the original parametric variables.
+  Reduced coordinates are mapped analytically to native design variables.
+  Recovering an original training design depends on the retained observation
+  subspace and is not guaranteed after truncation.
 
 - **Generalized formulation with weights**  
   PME relies on a weighted POD/PCA formulation, where weights can encode the role of variables (including null weights).  
-  This formulation is not equivalent to standard PCA and cannot be reduced to a simple SVD.
+  The observation metric and paired native-variable components are retained
+  by both direct and snapshot solutions.
+
+- **A shared fitting workflow**
+  `solver="auto"` chooses between the direct observation covariance and the
+  snapshot Gram matrix. Both use the same preprocessing, metric, numerical-rank
+  policy and downstream model interface. See [Snapshot formulation](snapshot.md).
 
 - **Design-aware latent space**  
   Unlike standard PCA (typically applied to state snapshots without variables), PME explicitly incorporates parametric design variables into the embedding.
@@ -124,7 +143,8 @@ PME-toolkit is designed to support:
 - systematic comparison between methods  
 - integration with optimization pipelines  
 
-The toolkit follows a **configuration-driven approach**, where experiments are fully defined through JSON files and can be reproduced across environments.
+The standard toolkit workflow follows a **configuration-driven approach**,
+with explicit datasets, preprocessing settings and solver choices.
 
 ---
 

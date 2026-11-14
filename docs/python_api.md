@@ -40,6 +40,29 @@ code using stored weights. `direct_decompose(pc, weights, options=None)` has
 the same outputs; `decompose(pc, weights, options=None, solver="auto")` selects
 the smaller symmetric problem. Regular fits accept the same choice in
 `cfg["solver"]`.
+If this setting is omitted, fitting uses `auto`. The regular model and all
+downstream APIs are shared by the two solvers. JSON and Python configuration
+indices are zero-based; `baseline_col=0` selects the first input sample.
+
+The positive `baseline_col` values previously accepted through a MATLAB-style
+interpretation now follow this same zero-based convention. Custom Python
+configurations that used one-based indices must subtract one. Existing
+distributed examples use `baseline_col=0` and keep their baseline.
+
+## Case outputs
+
+`run_case` returns a dictionary with `cfg`, `layout`, `meta`, `case_json`, `DB`,
+`DB_used`, `model`, `report`, `outdir`, `saved`, `filter_info` and `filter_mask`.
+The report is saved as `report.mat`. With `io.save_model=true` (the default),
+model saving writes `model.npz` and records its path under `saved.model_npz`.
+With `false`, that saved-file entry is absent and the in-memory `model` remains
+available. An omitted `io.outdir` uses `results` under the fitting case directory.
+`PmeModel.load` restores that model for transformation or backmapping.
+
+The effective solver and its diagnostics are available through
+`result["model"].stats_w["snapshot"]`, including `solver_requested`, `solver`,
+`matrix_dimension`, `numerical_rank` and `achieved_ci`. The `snapshot`
+diagnostic name applies to both solvers.
 
 ## Row-reader workflow
 
@@ -59,12 +82,15 @@ caller. Query coordinates are `(T, N)` and native predictions are `(M, T)`.
 An optional `mode_writer(start, stop, modes)` receives observation modes in
 a second pass. See [Snapshot formulation](snapshot.md) for a complete example,
 provider responsibilities, and storage requirements.
+The compact streaming model is distinct from `PmeModel`. The standard
+`run_case` workflow retains its database in memory for every solver choice.
 
 ---
 
 ## Status
 
-- fully functional and installable via PyPI
+- published package versions are installable via PyPI; v1.3.0 candidate APIs
+  require the corresponding source checkout until that version is released
 - validated against MATLAB reference through regression tests
 - recommended for standard usage
 

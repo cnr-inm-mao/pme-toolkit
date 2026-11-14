@@ -42,11 +42,13 @@ The current repository includes benchmark configurations for:
 
 - `glider`
 - `airfoil`
+- `propeller` (standard PME)
 
 These datasets are described under:
 
 - `databases/glider/`
 - `databases/airfoil/`
+- `databases/propeller/`
 
 ---
 
@@ -73,6 +75,25 @@ A typical workflow consists of:
        matlab -batch "run_back('<backmapping.json>')"
 
 Outputs are written to the `outdir` specified in the JSON configuration.
+Relative input and output paths are resolved against the configuration file's
+directory. The standard runners load the database into memory.
+
+## Solver selection
+
+All eleven benchmark fitting cases explicitly set `"solver": "auto"`.
+The shared case workflow selects `direct` when the number of positive-weight
+observation rows is smaller than the sample count, and `snapshot` otherwise.
+For solver comparisons, change this one field to `"direct"` or `"snapshot"`
+while retaining the same dataset, filters, metric and confidence index.
+Inputs that omit the field continue to use `auto` in both languages.
+
+Backmapping configurations refer to the fitting case and saved model; they do
+not have their own solver setting. Use only the backmapping examples actually
+included in a case directory and supply their required reduced coordinates.
+
+See [Snapshot formulation](../docs/snapshot.md) for the streamed reader API and
+[Zenodo regression](../docs/zenodo-regression.md) for the complete airfoil
+comparison against the preceding implementation.
 
 ---
 

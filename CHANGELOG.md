@@ -33,6 +33,8 @@ and semantic versioning principles.
   and Python comparison in a dedicated workflow.
 - A reproducible manuscript verification driver and shared curve inputs for
   the 1,048,576-coordinate streamed fit and analytical native backmapping.
+- Strict documentation builds on pull requests; publishing remains limited
+  to validated pushes to `main`.
 
 ### Changed
 
@@ -42,6 +44,14 @@ and semantic versioning principles.
   the previous direct code is used only from a pinned regression revision.
 - Make the public dense weight builders compatibility wrappers over the
   diagonal builders in both languages, keeping one source-weight implementation.
+- Declare `solver="auto"` in all eleven benchmark cases and the bundled tiny
+  example. Omitted solver fields remain supported in both languages.
+- Align omitted Python fitting defaults with MATLAB: `CI=0.99` and
+  `vars.use_db_range_if_missing=true`. Explicit settings are unchanged.
+- Use `results` under the fitting case directory as the shared default output
+  location, including standalone backmapping.
+- Enable model saving in the bundled tiny example for the documented fitting
+  and backmapping workflow.
 - Lift only resolved positive modes and keep complete eigenvalue clusters at
   the automatic retention boundary. Datasets with no resolved positive
   weighted variance now raise a clear error.
@@ -67,6 +77,16 @@ and semantic versioning principles.
   invalid configurations, valid field-only/scalar-only cases, and standard
   PME without physics.
 - Qualify MATLAB's `pme.slice` call in direct model transformation.
+- Use zero-based baseline indices consistently in Python configurations and
+  preserve the selected baseline through filtering in both languages.
+- Apply `io.transpose_if` once in the case workflow, including explicit
+  transposition and layout-based automatic orientation.
+- Honor `io.save_model` in Python and the MATLAB wrapper instead of saving
+  unconditionally. In-memory models remain available from the runner result.
+- Resolve relative MATLAB backmapping output directories against the case
+  directory even when an identically named directory exists elsewhere.
+- Correct installation and test commands, backmapping examples, output
+  descriptions and validation claims across the website and repository guides.
 
 ### Scope
 

@@ -26,6 +26,14 @@ def compare(reference_path: Path) -> None:
         cfg["mode"] = mode
         model = fit_model(db, cfg, urange_full=urange)
         reference = references[mode]
+        np.testing.assert_allclose(
+            model.p0.reshape(-1), np.asarray(reference["baseline"]).reshape(-1),
+            rtol=0, atol=1e-14, err_msg=f"{mode}: selected baseline",
+        )
+        np.testing.assert_allclose(
+            model.uinfo["Ubase_baseline_raw"], np.asarray(reference["native_baseline"]).reshape(-1),
+            rtol=0, atol=1e-14, err_msg=f"{mode}: native baseline",
+        )
         assert model.nconf == int(reference["nconf"]), f"{mode}: retained dimension differs"
         np.testing.assert_allclose(
             model.eigvals_reduced, np.asarray(reference["eigenvalues"]).reshape(-1),

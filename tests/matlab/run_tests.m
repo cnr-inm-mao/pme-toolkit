@@ -10,11 +10,13 @@ addpath(genpath(repo_root))
 rng(1)
 
 test_config_loader
+test_configuration_parity
 test_physics_config
 test_snapshot_decompose
 test_snapshot_fit
 test_streaming
 test_run_case
+test_io_controls
 test_backmapping
 test_regression
 

@@ -1,8 +1,22 @@
 from __future__ import annotations
 
 import json
+from math import isfinite
+from numbers import Real
 from pathlib import Path
 from typing import Any
+
+
+def _baseline_col_zero_based(cfg: dict[str, Any], samples: int) -> int:
+    """Resolve the canonical zero-based baseline index in the supplied database."""
+    value = cfg.get("baseline_col", 0)
+    if (isinstance(value, bool) or not isinstance(value, Real)
+            or not isfinite(value) or int(value) != value):
+        raise ValueError("baseline_col must be a zero-based integer")
+    value = int(value)
+    if not 0 <= value < samples:
+        raise ValueError(f"baseline_col={value} out of range for {samples} samples")
+    return value
 
 
 def validate_physics_config(cfg: dict[str, Any]) -> None:
