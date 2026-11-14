@@ -10,6 +10,7 @@ addpath(genpath(repo_root))
 rng(1)
 
 test_config_loader
+test_physics_config
 test_run_case
 test_backmapping
 test_regression

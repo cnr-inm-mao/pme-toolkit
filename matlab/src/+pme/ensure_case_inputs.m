@@ -21,6 +21,7 @@ assert(isfile(jsonAbs), 'Case JSON not found: %s', jsonAbs);
 caseDir = string(fileparts(jsonAbs));
 
 raw = jsondecode(fileread(jsonAbs));
+pme.validate_physics_config(raw);
 
 dbfile = "";
 urangeFile = "";

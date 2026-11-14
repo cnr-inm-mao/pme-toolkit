@@ -5,6 +5,23 @@ from pathlib import Path
 from typing import Any
 
 
+def validate_physics_config(cfg: dict[str, Any]) -> None:
+    """Require physical sources for PI/PD instead of silently fitting without them."""
+    mode = str(cfg.get("mode", "pme")).lower()
+    if mode not in ("pi", "pd"):
+        return
+
+    phys = cfg.get("phys")
+    if not isinstance(phys, dict) or not (
+        phys.get("fields") or phys.get("scalars")
+    ):
+        raise ValueError(
+            f"mode='{mode}' requires at least one physical field or scalar in "
+            "cfg.phys.fields or cfg.phys.scalars. "
+            "Use mode='pme' for geometry-only PME."
+        )
+
+
 def _resolve_path(base_dir: Path, value: str | None) -> str | None:
     """Resolve a possibly-relative path against the case.json directory."""
     if value is None or value == "":
@@ -53,6 +70,7 @@ def load_case_json(case_json: str | Path) -> tuple[dict[str, Any], Path]:
     cfg = json.loads(case_path.read_text(encoding="utf-8"))
     if not isinstance(cfg, dict):
         raise TypeError("case.json must decode to a JSON object")
+    validate_physics_config(cfg)
 
     base_dir = case_path.parent
     cfg = _resolve_case_paths(cfg, base_dir)
