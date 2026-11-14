@@ -2,7 +2,7 @@
 function plot_scree_plot(model, outdir)
 %PME.PLOT_SCREE_PLOT Plot scree of eigenvalues.
 %
-% Shows eigenvalues up to Mact.
+% Shows resolved eigenvalues through at least the selected dimension.
 
 if nargin < 2 || isempty(outdir)
     outdir = fullfile(pwd,'results');
@@ -25,7 +25,7 @@ else
     Mact = cfg.vars.Mbase;
 end
 
-Mplot = min(Mact, numel(L));
+Mplot = min(max(Mact, nconf), numel(L));
 x = 1:Mplot;
 
 fig = figure('Name','Scree plot','Color','w');
@@ -49,7 +49,7 @@ ylabel(ax,'Eigenvalue \lambda_j [-]');
 title(ax, sprintf('Eigenvalue spectrum (%s)', upper(string(cfg.mode))), ...
     'FontWeight','bold');
 
-xlim(ax,[1 Mplot]);
+if Mplot == 1, xlim(ax, [0.5 1.5]); else, xlim(ax, [1 Mplot]); end
 
 legend(ax, {'\lambda_j','selected N'}, ...
     'Location','northeast');

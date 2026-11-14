@@ -42,6 +42,8 @@ nconf = model.sizes.nconf;
 
 delta = Ptrue - model.P0;
 Pc    = delta - model.delta_m;   % [Np x S] centered signal
+w = pme.weight_diagonal(model.W);
+total_variance = pme.total_variance(model);
 
 % --- row positions of blocks in P ---
 pos = pme_report_p_blocks(model, size(Ptrue,1), Mact);
@@ -59,6 +61,8 @@ rep.nconf = nconf;
 rep.ninf  = ninf;
 rep.nphys = nphys;
 rep.pos   = pos;
+rep.total_variance = total_variance;
+rep.retained_variance = sum(model.Lr) / total_variance;
 
 % =========================
 % 1) Variance sanity check
@@ -105,6 +109,7 @@ fprintf('[pme.report] N modes needed for CI=%.4f: %d\n', cfg.CI, nconf);
 fprintf('[pme.report] reduced from Mact=%d to N=%d  ->  %.2f %% reduction\n', ...
     Mact, nconf, reduction_pct);
 fprintf('[pme.report] number of information sources = %d\n', ninf);
+fprintf('[pme.report] retained weighted variance = %.12g\n', rep.retained_variance);
 
 % ==========================================
 % 3) NMSE per information source
@@ -112,7 +117,7 @@ fprintf('[pme.report] number of information sources = %d\n', ninf);
 rep.nmse = struct();
 rep.nmse.enable = (ninf > 0);
 
-kplot = min(Mact, size(model.Z_full,2));   % full curve length
+kplot = min(max(Mact, nconf), size(model.Z_full,2));
 krep  = min(nconf, kplot);                 % reported value at k=nconf
 
 rep.nmse.k_grid = 1:kplot;
@@ -133,11 +138,13 @@ if rep.nmse.enable
     end
 
     nmse_t = zeros(ninf, kplot);   % columns correspond to k = 1..kplot
+    nmse_global = zeros(1, kplot);
 
     for jconf = 1:kplot
         k = jconf; % k modes
         Prec = model.Z_full(:,1:k) * (model.ak_full(:,1:k)');  % [Np x S]
         E = Pc - Prec;
+        nmse_global(jconf) = sum(w .* sum(E.^2, 2)) / (S * total_variance);
 
         for i = 1:ninf
             rr = sources(i).rows;
@@ -147,6 +154,8 @@ if rep.nmse.enable
     end
 
     var_t = 1 - nmse_t;
+    % A constant source has no variance to retain.
+    var_t(var_src == 0, :) = 0;
     nmse_t = real(nmse_t);
     var_t  = real(var_t);
 
@@ -169,23 +178,23 @@ if rep.nmse.enable
         fprintf('[pme.report] NMSE %-5s = %.6g\n', string(sources(i).name), nmse_t(i,krep));
     end
     
-    % ---- Global check (consistent with W: each info has weight 1) ----
-    nmse_global = mean(nmse_t, 1);   % 1 x kplot
+    % ---- Global check in the actual weighted metric ----
     ev_global   = 1 - nmse_global;   % 1 x kplot
     
     lam = model.L_full(:);
-    lam_cum = cumsum(lam(1:kplot)).' / max(double(ninf), eps);  % 1 x kplot
+    lam_cum = cumsum(lam(1:kplot)).' / total_variance;
 
     rep.nmse.nmse_global  = nmse_global;
     rep.nmse.ev_global    = ev_global;
     rep.nmse.lam_cum_ninf = lam_cum;
+    rep.nmse.retained_variance = lam_cum;
 
     fprintf('[pme.report] NMSE %-5s = %.6g\n', 'total', nmse_global(krep));
 
 
     fprintf('\n[pme.report] ===== GLOBAL CHECK (W-consistent) =====\n');
     fprintf('[pme.report] 1 - NMSE_total at k=nconf = %.6g\n', ev_global(krep));
-    fprintf('[pme.report] sum(lambda_1..k)/ninf at k=nconf = %.6g\n', lam_cum(krep));
+    fprintf('[pme.report] sum(lambda_1..k)/trace(K) at k=nconf = %.6g\n', lam_cum(krep));
     fprintf('[pme.report] diff = %.3g\n', ev_global(krep) - lam_cum(krep));
 
     try

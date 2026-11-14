@@ -33,7 +33,7 @@ xlabel(ax, 'Number of retained modes, k [-]');
 ylabel(ax, 'NMSE [-]');
 title(ax, sprintf('NMSE by information source (%s)', upper(string(rep.mode))), ...
     'FontWeight', 'bold');
-xlim(ax, [k(1), k(end)]);
+if numel(k) == 1, xlim(ax, [0.5 1.5]); else, xlim(ax, [k(1), k(end)]); end
 
 labels = cell(1, numel(sources));
 for i = 1:numel(sources)

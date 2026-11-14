@@ -44,6 +44,33 @@ Confidence index (retained variance), e.g.:
 
     0.95 → 95% retained variance
 
+The valid interval is `(0, 1]`. Retention is measured against the complete
+weighted snapshot trace, before numerical rank truncation. If the selected
+boundary intersects a repeated eigenvalue cluster, the whole cluster is kept.
+If the resolved spectrum cannot reach the requested `CI`, all resolved modes
+are retained and a warning reports the achieved fraction.
+
+### `snapshot` (optional)
+
+The same solver options are accepted in MATLAB and Python:
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `eig_rtol` | `S * eps` | Relative cutoff against the largest eigenvalue, with a minimum of `S * eps`; `S` is the number of retained samples and `eps` is double-precision machine epsilon. |
+| `eig_atol` | `0` | Absolute eigenvalue cutoff. |
+| `cluster_rtol` | `1e-10` | Relative gap tolerance for keeping an entire eigenvalue cluster. |
+| `block_rows` | `4096` | Maximum rows per weighted Gram assembly block. |
+
+Eigenvalues must satisfy `lambda > max(eig_atol, eig_rtol * lambda_max)`.
+Adjacent resolved eigenvalues are treated as one cluster when their gap is at
+most the larger of that cutoff and `cluster_rtol` times the larger eigenvalue.
+Tolerances must be finite and nonnegative; `block_rows` must be a positive integer.
+The requested relative cutoff, its effective value after the numerical floor,
+and achieved retention are stored in the model diagnostics. Setting the
+requested relative cutoff to zero does not disable the roundoff protection.
+See [Snapshot formulation](snapshot.md) for storage, numerical limits, and
+compatibility details.
+
 ---
 
 ### `baseline_col`

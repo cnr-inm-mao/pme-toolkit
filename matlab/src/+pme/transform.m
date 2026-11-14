@@ -3,7 +3,7 @@ function alpha = transform(model, DB_or_blocks)
 % alpha = transform(model, DB)
 
 if isnumeric(DB_or_blocks)
-    blocks = slice(DB_or_blocks, model.layout);
+    blocks = pme.slice(DB_or_blocks, model.layout);
 else
     blocks = DB_or_blocks;
 end
@@ -15,5 +15,6 @@ delta = P - model.P0;
 Pc    = delta - model.delta_m;
 
 % alpha in reduced basis
-alpha = (Pc' * model.W * model.Zr);  % [S x nconf]
+w = pme.weight_diagonal(model.W);
+alpha = Pc' * (w .* model.Zr);  % [S x nconf]
 end

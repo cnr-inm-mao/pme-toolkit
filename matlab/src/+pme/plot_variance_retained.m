@@ -1,11 +1,11 @@
 function plot_variance_retained(model, outdir)
-%PME.PLOT_VARIANCE_RETAINED Plot retained variance curve up to Mact.
+%PME.PLOT_VARIANCE_RETAINED Plot retained weighted construction variance.
 %
 % Output:
 %   variance_retained.png
 %
 % Conventions:
-% - x-axis goes up to kmax = min(Mact, numel(L))
+% - x-axis includes the selected dimension and at least Mact when resolved
 % - shaded area from 95% to 100%
 % - horizontal line at 99%
 % - vertical line at nconf
@@ -26,15 +26,15 @@ else
     Mact = cfg.vars.Mbase;
 end
 
-ninf = local_compute_ninf(model);
-kmax = min(Mact, numel(L));
+total_variance = pme.total_variance(model);
+kmax = min(max(Mact, nconf), numel(L));
 
 if kmax < 1
     warning('[pme.plot_variance_retained] No eigenvalues available. Plot skipped.');
     return;
 end
 
-cumPct = 100 * cumsum(L(1:kmax)) / max(double(ninf), eps);
+cumPct = 100 * cumsum(L(1:kmax)) / total_variance;
 x = 1:kmax;
 
 fig = figure('Name','Retained variance','Color','w');
@@ -60,7 +60,7 @@ xlabel(ax, 'Number of retained modes, k [-]');
 ylabel(ax, 'Retained variance [%]');
 title(ax, sprintf('Retained variance (%s)', upper(string(cfg.mode))), ...
     'FontWeight', 'bold');
-xlim(ax, [1 kmax]);
+if kmax == 1, xlim(ax, [0.5 1.5]); else, xlim(ax, [1 kmax]); end
 ylim(ax, [0 100]);
 
 legend(ax, [h0 h1 h2 h3], ...
@@ -70,39 +70,4 @@ legend(ax, [h0 h1 h2 h3], ...
 saveas(fig, fullfile(outdir, 'variance_retained.png'));
 close(fig);
 
-end
-
-function ninf = local_compute_ninf(model)
-cfg    = model.cfg;
-layout = model.layout;
-mode   = lower(string(cfg.mode));
-
-nphys = 0;
-
-if isfield(layout,'F') && isfield(layout.F,'items') && ~isempty(layout.F.items)
-    for i=1:numel(layout.F.items)
-        nphys = nphys + layout.F.items(i).nCond;
-    end
-elseif isfield(layout,'F') && isfield(layout.F,'nRows') && layout.F.nRows > 0
-    nphys = nphys + 1;
-end
-
-if isfield(layout,'C') && isfield(layout.C,'items') && ~isempty(layout.C.items)
-    for i=1:numel(layout.C.items)
-        nphys = nphys + layout.C.items(i).nCond;
-    end
-elseif isfield(layout,'C') && isfield(layout.C,'nRows') && layout.C.nRows > 0
-    nphys = nphys + 1;
-end
-
-switch mode
-    case "pme"
-        ninf = 1;
-    case "pi"
-        ninf = 1 + nphys;
-    case "pd"
-        ninf = nphys;
-    otherwise
-        error('Unknown mode: %s', mode);
-end
 end

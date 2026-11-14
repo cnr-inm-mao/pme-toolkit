@@ -6,15 +6,16 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.linalg import eig
 
 from .config_loader import load_case_json, validate_physics_config
 from .filters import apply_filters
 from .io import load_mat_database, load_mat_range
 from .layout import parse_layout
-from .weights import build_weights
+from .snapshot import snapshot_decompose
+from .weights import build_weights_diag
 
 import json
+import warnings
 
 Array = NDArray[np.float64]
 
@@ -40,19 +41,38 @@ def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _choose_nconf(eigvals: Array, ci: float) -> int:
+def _choose_nconf(
+    eigvals: Array,
+    ci: float,
+    total_variance: float | None = None,
+    cluster_rtol: float = 1e-10,
+    cluster_atol: float = 0.0,
+) -> int:
+    """Choose a complete resolved eigenspace against the full weighted trace."""
     eigvals = np.asarray(eigvals, dtype=float).reshape(-1)
-    if eigvals.size == 0:
-        return 1
-
-    cum = np.cumsum(eigvals)
-    tot = float(cum[-1])
-    if tot <= 0.0:
-        return 1
-
-    ratio = cum / tot
-    idx = int(np.searchsorted(ratio, ci, side="left"))
-    return min(idx + 1, eigvals.size)
+    if eigvals.size == 0 or np.any(~np.isfinite(eigvals)) or np.any(eigvals <= 0):
+        raise ValueError("Mode selection requires resolved positive eigenvalues")
+    if not np.isfinite(ci) or not 0 < ci <= 1:
+        raise ValueError("CI must lie in (0, 1]")
+    total = float(np.sum(eigvals)) if total_variance is None else float(total_variance)
+    if not np.isfinite(total) or total <= 0:
+        raise ValueError("Total weighted variance must be positive and finite")
+    ratio = np.cumsum(eigvals) / total
+    tolerance = 10 * np.finfo(float).eps
+    nconf = min(int(np.searchsorted(ratio + tolerance, ci, side="left")) + 1, eigvals.size)
+    while nconf < eigvals.size:
+        left, right = eigvals[nconf - 1 : nconf + 1]
+        if left - right > max(cluster_atol, cluster_rtol * max(left, right)):
+            break
+        nconf += 1
+    if ratio[nconf - 1] + tolerance < ci:
+        warnings.warn(
+            f"Requested CI={ci:g} exceeds the resolved variance fraction "
+            f"{ratio[nconf - 1]:.12g}; retaining all resolved modes",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return nconf
 
 
 def _slice_blocks(db: Array, layout: dict[str, Any]) -> dict[str, Array]:
@@ -260,6 +280,15 @@ def _u_rows_in_p(mode: str, dlen: int, mact: int) -> tuple[int, int]:
     raise ValueError(f"Unknown mode: {mode}")
 
 
+def _w_as_diag(arr) -> Array:
+    """Coerce a stored W (legacy dense (R, R) or new 1D (R,)) to a 1D diagonal."""
+    a = np.asarray(arr, dtype=float)
+    if a.ndim == 2:
+        # legacy: extract the diagonal of a dense block-diagonal matrix
+        return np.ascontiguousarray(np.diag(a))
+    return np.ascontiguousarray(a.reshape(-1))
+
+
 def _weighted_fit(
     p: Array,
     mode: str,
@@ -272,42 +301,27 @@ def _weighted_fit(
     """
     Generic weighted fit for PME / PI-PME / PD-PME.
     """
-    s = p.shape[1]
-
     p0 = p[:, [baseline_col]]
     delta = p - p0
     delta_m = np.mean(delta, axis=1, keepdims=True)
     pc = delta - delta_m
 
-    w, stats_w = build_weights(delta, layout, cfg, uinfo, blocks)
+    w_diag, stats_w = build_weights_diag(delta, layout, cfg, uinfo, blocks)
 
-    a = (pc @ pc.T) / float(s)
-    aw = a @ w
-
-    eigvals_raw, eigvecs_raw = eig(aw)
-    eigvals_raw = np.real(eigvals_raw)
-    eigvecs_raw = np.real(eigvecs_raw)
-
-    order = np.argsort(eigvals_raw)[::-1]
-    l_full = np.maximum(eigvals_raw[order], 0.0)
-    z_full = eigvecs_raw[:, order]
-
-    # Normalize Z so that Z' W Z = I
-    an = np.diag(z_full.T @ w @ z_full)
-    an = np.sqrt(np.maximum(an, np.finfo(float).eps))
-    z_full = z_full / an[None, :]
-
-    ak_full = pc.T @ w @ z_full
+    snapshot = snapshot_decompose(pc, w_diag, cfg.get("snapshot"))
+    stats_w["snapshot"] = snapshot["info"]
 
     return {
         "P0": p0,
         "delta_m": delta_m,
-        "W": w,
+        # W is stored as its 1D diagonal (length R) -- the dense (R, R)
+        # matrix is never materialised; see build_weights_diag.
+        "W": w_diag,
         "statsW": stats_w,
-        "L_full": l_full,
-        "Z_full": z_full,
+        "L_full": snapshot["eigenvalues"],
+        "Z_full": snapshot["modes"],
         "Pc": pc,
-        "ak_full": ak_full,
+        "ak_full": snapshot["coordinates"],
     }
 
 def _jsonify_layout(obj):
@@ -366,7 +380,8 @@ class PmeModel:
         delta = p - self.p0[:, [0]]
         pc = delta - self.delta_m[:, [0]]
 
-        alpha = pc.T @ self.w @ self.z_reduced
+        # self.w is the 1D diagonal of the weight matrix (length R)
+        alpha = pc.T @ (self.w[:, None] * self.z_reduced)
         return np.asarray(alpha, dtype=float)
 
     def transform_valid(self, db: Array) -> Array:
@@ -472,7 +487,7 @@ class PmeModel:
             p0=np.asarray(data["p0"], dtype=float),
             delta_m=np.asarray(data["delta_m"], dtype=float),
             pc=np.asarray(data["pc"], dtype=float),
-            w=np.asarray(data["w"], dtype=float),
+            w=_w_as_diag(data["w"]),
             z_reduced=np.asarray(data["z_reduced"], dtype=float),
             eigvals_reduced=np.asarray(data["eigvals_reduced"], dtype=float),
             eigvals_full=np.asarray(data["eigvals_full"], dtype=float),
@@ -553,11 +568,24 @@ def fit_model(
     pc = np.asarray(weighted["Pc"], dtype=float)
     ak_full = np.asarray(weighted["ak_full"], dtype=float)
 
-    nconf = _choose_nconf(l_full, float(cfg["CI"]))
+    snapshot_info = weighted["statsW"]["snapshot"]
+    nconf = _choose_nconf(
+        l_full,
+        float(cfg["CI"]),
+        snapshot_info["total_variance"],
+        snapshot_info["cluster_rtol"],
+        snapshot_info["eigenvalue_threshold"],
+    )
+    achieved_ci = float(np.sum(l_full[:nconf]) / snapshot_info["total_variance"])
+    snapshot_info.update(
+        achieved_ci=achieved_ci,
+        resolved_variance_fraction=float(np.sum(l_full) / snapshot_info["total_variance"]),
+        ci_met=bool(achieved_ci + 10 * np.finfo(float).eps >= float(cfg["CI"])),
+    )
     z_reduced = z_full[:, :nconf]
     eigvals_reduced = l_full[:nconf]
 
-    alpha_train = pc.T @ w @ z_reduced
+    alpha_train = ak_full[:, :nconf]
 
     return PmeModel(
         mode=mode,

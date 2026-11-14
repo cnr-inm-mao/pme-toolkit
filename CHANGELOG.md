@@ -7,7 +7,38 @@ and semantic versioning principles.
 
 ---
 
-## [Unreleased]
+## [1.3.0] - Unreleased
+
+### Added
+
+- Symmetric snapshot Gram eigensolvers for PME, PI-PME and PD-PME in both
+  MATLAB and Python, building on Antoine DeBlois's
+  [PR #1](https://github.com/cnr-inm-mao/pme-toolkit/pull/1). The complete
+  lifted modes retain the zero-weight native components used by backmapping.
+- Vector weight storage and bounded row-block Gram assembly in the fitting
+  paths, avoiding dense state covariance and weight matrices. The complete
+  construction data remain in memory.
+- Shared `snapshot` options for numerical rank, absolute and relative
+  eigenvalue cutoffs, repeated-eigenvalue clusters and row-block size.
+- Controlled-spectrum direct-reference tests and a common PME/PI/PD fixture
+  for comparison of current MATLAB and Python outputs in CI.
+
+### Changed
+
+- Lift only resolved positive modes and keep complete eigenvalue clusters at
+  the automatic retention boundary. Datasets with no resolved positive
+  weighted variance now raise a clear error.
+- Measure confidence and global variance retention against the full Gram
+  trace, including variance excluded by numerical rank truncation. An
+  unattainable confidence target produces a warning and achieved-retention
+  diagnostics.
+- Store `model.W`/`model.w` as a diagonal vector in newly fitted models.
+  Legacy dense saved weights remain supported. Explicit dense weight-builder
+  functions are retained for compatibility. Full-spectrum diagnostic arrays
+  now contain only the resolved positive spectrum.
+- Compute global reconstruction NMSE from weighted residual energy. Constant
+  sources contribute no retained variance, and diagnostic curves include
+  the selected dimension even when it exceeds the number of native variables.
 
 ### Fixed
 
@@ -18,6 +49,15 @@ and semantic versioning principles.
   loading/downloads and in direct fitting calls. Regression tests cover
   invalid configurations, valid field-only/scalar-only cases, and standard
   PME without physics.
+- Qualify MATLAB's `pme.slice` call in direct model transformation.
+
+### Scope
+
+- This release provides the production in-memory snapshot backend. Streaming
+  dataset loading, native-only model storage, and cross-Gram query encoding
+  from independent research implementations are not exposed here.
+- See [Snapshot formulation](docs/snapshot.md) for equations, compatibility
+  changes, conditioning and the `O(RS + S^2)` storage model.
 
 ### Planned
 

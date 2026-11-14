@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from .model import PmeModel
+from .model import PmeModel, _w_as_diag
 
 
 @dataclass
@@ -40,7 +40,15 @@ def _field_k(item: dict[str, Any]) -> int:
 
 def _kplot(model: PmeModel) -> int:
     lam = np.asarray(model.eigvals_full, dtype=float).reshape(-1)
-    return int(min(_mact(model), lam.size))
+    return int(min(max(_mact(model), int(model.nconf)), lam.size))
+
+
+def _total_variance(model: PmeModel) -> float:
+    """Use the complete Gram trace, including numerically discarded modes."""
+    snapshot = model.stats_w.get("snapshot", {})
+    if "total_variance" in snapshot:
+        return float(snapshot["total_variance"])
+    return float(np.sum(np.asarray(model.eigvals_full, dtype=float)))
 
 
 def _p_blocks(model: PmeModel) -> dict[str, np.ndarray]:
@@ -212,7 +220,7 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
     - var_p
     - nmse_global
     - ev_global
-    - lam_cum_ninf
+    - retained_variance (lam_cum_ninf is a compatibility alias)
     """
     sources = _build_info_sources(model)
     ninf = len(sources)
@@ -229,12 +237,16 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
             "var_p": np.zeros((0, kplot), dtype=float),
             "nmse_global": np.zeros((kplot,), dtype=float),
             "ev_global": np.zeros((kplot,), dtype=float),
+            "retained_variance": np.zeros((kplot,), dtype=float),
             "lam_cum_ninf": np.zeros((kplot,), dtype=float),
         }
 
     pc = np.asarray(model.pc, dtype=float)
     z_full = np.asarray(model.z_full, dtype=float)
     ak_full = np.asarray(model.ak_full, dtype=float)
+    w = _w_as_diag(model.w)
+    total_variance = _total_variance(model)
+    denominator = total_variance if total_variance > 0.0 else np.finfo(float).eps
 
     var_src = np.zeros((ninf,), dtype=float)
     for i, src in enumerate(sources):
@@ -242,11 +254,14 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
         var_src[i] = float(np.sum(np.var(pc[rr, :], axis=1, ddof=0)))
 
     nmse_t = np.zeros((ninf, kplot), dtype=float)
+    nmse_global = np.zeros(kplot, dtype=float)
 
     for jconf in range(1, kplot + 1):
         k = jconf
         prec = z_full[:, :k] @ ak_full[:, :k].T
         e = pc - prec
+        weighted_mse = float(np.einsum("ij,i,ij->", e, w, e)) / pc.shape[1]
+        nmse_global[jconf - 1] = weighted_mse / denominator
 
         for i, src in enumerate(sources):
             rr = src.rows
@@ -254,6 +269,7 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
             nmse_t[i, jconf - 1] = mse_block / max(var_src[i], np.finfo(float).eps)
 
     var_t = 1.0 - nmse_t
+    var_t[var_src == 0.0, :] = 0.0
 
     var_p = np.zeros_like(var_t)
     if kplot >= 1:
@@ -261,11 +277,10 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
     if kplot >= 2:
         var_p[:, 1:] = var_t[:, 1:] - var_t[:, :-1]
 
-    nmse_global = np.mean(nmse_t, axis=0)
     ev_global = 1.0 - nmse_global
 
     lam = np.asarray(model.eigvals_full, dtype=float).reshape(-1)
-    lam_cum = np.cumsum(lam[:kplot]) / max(float(ninf), np.finfo(float).eps)
+    lam_cum = np.cumsum(lam[:kplot]) / denominator
 
     return {
         "enable": True,
@@ -277,6 +292,7 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
         "var_p": np.real(var_p),
         "nmse_global": np.real(nmse_global),
         "ev_global": np.real(ev_global),
+        "retained_variance": np.real(lam_cum),
         "lam_cum_ninf": np.real(lam_cum),
     }
 
@@ -390,8 +406,10 @@ def build_report(model: PmeModel) -> dict[str, Any]:
             "nmse_at_nconf": nmse_at_nconf,
         },
         "global_check": {
+            "total_variance": _total_variance(model),
             "nmse_global": np.asarray(rec["nmse_global"], dtype=float),
             "ev_global": np.asarray(rec["ev_global"], dtype=float),
+            "retained_variance": np.asarray(rec["retained_variance"], dtype=float),
             "lam_cum_ninf": np.asarray(rec["lam_cum_ninf"], dtype=float),
             "one_minus_mean_nmse": float(rec["ev_global"][krep0]) if len(rec["ev_global"]) else np.nan,
             "eig_ratio": float(rec["lam_cum_ninf"][krep0]) if len(rec["lam_cum_ninf"]) else np.nan,
@@ -481,7 +499,7 @@ def print_report(model: PmeModel) -> dict[str, Any]:
     print()
     print("[pme.report] ===== GLOBAL CHECK (W-consistent) =====")
     print(f"[pme.report] 1 - NMSE_total at k=nconf = {one_minus_mean_nmse:.6f}")
-    print(f"[pme.report] sum(lambda_1..k)/ninf at k=nconf = {eig_ratio:.6f}")
+    print(f"[pme.report] sum(lambda_1..k)/trace(K) at k=nconf = {eig_ratio:.6f}")
     print(f"[pme.report] diff = {diff:.2e}")
 
 

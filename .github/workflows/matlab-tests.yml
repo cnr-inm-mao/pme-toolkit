@@ -9,10 +9,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Python for cross-language validation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python package
+        run: python -m pip install -e ./python
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
@@ -24,3 +33,7 @@ jobs:
             repo = getenv('GITHUB_WORKSPACE');
             cd(repo);
             run(fullfile(repo,'tests','matlab','run_tests.m'));
+            export_snapshot_parity(fullfile(getenv('RUNNER_TEMP'),'snapshot_parity.json'));
+
+      - name: Compare current MATLAB and Python snapshot results
+        run: python tests/python/compare_snapshot_parity.py "$RUNNER_TEMP/snapshot_parity.json"

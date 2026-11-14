@@ -57,6 +57,13 @@ These provide a simplified interface to the same JSON-driven workflow:
 
 ## Notes
 
+`pme.snapshot_decompose(Pc, w, options)` exposes the snapshot solver for
+already centered data with samples in columns. Its result contains resolved
+eigenvalues, complete modes, training coordinates, sample eigenvectors and
+diagnostics. `pme.weights_diag` builds vector weights for the normal fitting
+path. See [Snapshot formulation](snapshot.md) for numerical options and
+compatibility with legacy models.
+
 - MATLAB and Python implementations follow the same configuration structure  
 - JSON files define the full workflow  
 - MATLAB is useful for validation and comparison with the reference implementation  

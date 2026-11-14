@@ -27,6 +27,13 @@ The Python implementation supports:
 - dimensionality reduction and variance analysis
 - backmapping to original variables
 - model persistence (`model.npz`)
+- snapshot Gram eigensolver with vector weights and numerical-rank diagnostics
+
+The low-level `snapshot_decompose(pc, weights, options=None)` accepts centered
+data with samples in columns and returns resolved eigenvalues, complete modes,
+training coordinates, sample eigenvectors and diagnostics. See
+[Snapshot formulation](snapshot.md) for conventions and migration of custom
+code using stored weights.
 
 ---
 

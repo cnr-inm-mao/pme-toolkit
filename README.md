@@ -73,8 +73,14 @@ PME addresses these limitations by constructing a **low-dimensional embedding of
 - **JSON-driven workflows** for reproducibility  
 - **analytical backmapping** to original variables  
 - **weighted and physics-aware embeddings**  
+- **snapshot Gram formulation** in MATLAB and Python, with diagonal weights,
+  numerical-rank control and complete native-mode recovery
 - **cross-language regression testing** (MATLAB ↔ Python)  
 - benchmark-ready structure for **glider** and **airfoil** cases  
+
+See [Snapshot formulation](docs/snapshot.md) for the equations, numerical
+tolerances, model compatibility and memory limits of the 1.3.0 development
+version. The latest published package remains available through the PyPI badge.
 
 ---
 
