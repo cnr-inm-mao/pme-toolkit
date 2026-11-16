@@ -1,0 +1,1439 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Parametric Model Embedding toolkit for design-space dimensionality reduction">
+      
+      
+      
+        <link rel="canonical" href="https://cnr-inm-mao.github.io/pme-toolkit/reproducibility/">
+      
+      
+        <link rel="prev" href="../datasets/">
+      
+      
+        <link rel="next" href="../zenodo-regression/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/logos/logo-wave-nobg.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Reproducibility - PME-toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#reproducibility" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="PME-toolkit" class="md-header__button md-logo" aria-label="PME-toolkit" data-md-component="logo">
+      
+  <img src="../assets/logos/logo-wave-white-nobg.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PME-toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Reproducibility
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="PME-toolkit" class="md-nav__button md-logo" aria-label="PME-toolkit" data-md-component="logo">
+      
+  <img src="../assets/logos/logo-wave-white-nobg.png" alt="logo">
+
+    </a>
+    PME-toolkit
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Core concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../snapshot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshot formulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../input_data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Execution
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reproducibility
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reproducibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#self-contained-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-contained validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Self-contained validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#matlab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MATLAB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#direct-and-snapshot-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct and snapshot validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streamed-matlab-and-python-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streamed MATLAB and Python comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controlled-manuscript-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlled manuscript experiments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benchmark-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benchmark reproducibility
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benchmark reproducibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zenodo-regression-against-the-preceding-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zenodo regression against the preceding implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-driven-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration-driven workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zenodo-regression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zenodo regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backmapping
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Backmapping
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backmapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backmapping_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visualization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../python_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../matlab_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MATLAB API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../citation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#self-contained-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-contained validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Self-contained validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#matlab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MATLAB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#direct-and-snapshot-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct and snapshot validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streamed-matlab-and-python-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streamed MATLAB and Python comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controlled-manuscript-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlled manuscript experiments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benchmark-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benchmark reproducibility
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benchmark reproducibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zenodo-regression-against-the-preceding-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zenodo regression against the preceding implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-driven-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration-driven workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="reproducibility">Reproducibility</h1>
+<p>PME-toolkit is designed to support reproducible dimensionality reduction workflows through:</p>
+<ul>
+<li>configuration-driven execution (JSON files)</li>
+<li>versioned datasets</li>
+<li>benchmark definitions</li>
+</ul>
+<hr />
+<h2 id="self-contained-validation">Self-contained validation</h2>
+<p>The repository includes a minimal dataset and test cases for quick validation:</p>
+<ul>
+<li>data: <code>tests/data/</code></li>
+<li>configurations: <code>tests/cases/</code></li>
+</ul>
+<p>These provide a small workflow that does not require an external dataset.</p>
+<h3 id="matlab">MATLAB</h3>
+<pre><code>run("tests/matlab/run_tests.m")
+</code></pre>
+<h3 id="python">Python</h3>
+<pre><code>pytest tests/python -q --ignore=tests/python/test_run_case.py
+</code></pre>
+<p>The excluded integration test uses the complete external glider database.
+Run <code>pytest tests/python -q</code> to include it; that run can download the benchmark
+archive. The tiny fixture and the remaining local tests need no external data.</p>
+<h2 id="direct-and-snapshot-validation">Direct and snapshot validation</h2>
+<p>The snapshot tests compare a controlled spectrum with an independent symmetric
+observation-covariance calculation. They check weighted orthonormality, complete
+repeated eigenspaces, zero-weight native components, native reconstruction,
+rank-deficient inputs, row-block assembly, and variance-based mode selection.
+The <code>auto</code>, <code>direct</code> and <code>snapshot</code> choices use the same prepared data, metric
+and numerical tolerances. The direct option is also exercised when the number
+of observations is smaller than the number of samples.</p>
+<p>Both languages also use <code>tests/data/snapshot_parity.json</code> for PME, PI-PME, and
+PD-PME. It contains the same geometry, native variables, physical fields and
+scalars, including a constant source. To compare the current implementations:</p>
+<pre><code class="language-matlab">run(&quot;tests/matlab/run_tests.m&quot;)
+export_snapshot_parity(&quot;snapshot_parity.json&quot;)
+</code></pre>
+<pre><code class="language-bash">python tests/python/compare_snapshot_parity.py snapshot_parity.json
+</code></pre>
+<p>The MATLAB CI job runs this comparison after its test suite. It checks
+eigenvalues, selected dimension, weights, sample subspaces, native
+reconstructions, total variance and achieved retention with explicit tolerances.
+Modes are compared through invariant quantities, so signs and rotations within
+repeated eigenspaces do not create false failures.</p>
+<p>The complete Python suite includes a benchmark workflow that may download an
+external dataset. For tests that do not require that download, use:</p>
+<pre><code class="language-bash">pytest tests/python -q --ignore=tests/python/test_run_case.py
+</code></pre>
+<h2 id="streamed-matlab-and-python-comparison">Streamed MATLAB and Python comparison</h2>
+<p>The fixture <code>tests/data/snapshot_curve.json</code> stores the same native construction
+and query designs for both languages. The observation reader evaluates the
+documented nonlinear curve at midpoint locations. The export checks resident
+direct and snapshot results, optional observation-mode writing, cross-Gram
+query encoding and a native-only fit with 1,048,576 observation rows:</p>
+<pre><code class="language-matlab">addpath(&quot;matlab/src&quot;)
+addpath(&quot;tests/matlab&quot;)
+export_streaming_parity(&quot;streaming_parity.json&quot;)
+</code></pre>
+<p>The MATLAB CI workflow compares the exported results with the current Python
+implementation. Its comparisons use eigenvalues, selected sample subspaces
+and native backmaps, accounting for the sign ambiguity of eigenvectors. The
+large run also verifies that the reader never receives more rows than the
+configured block size and that one fitting pass reads every row exactly once.</p>
+<h2 id="controlled-manuscript-experiments">Controlled manuscript experiments</h2>
+<p>Run the toolkit verification driver from the repository root, using the Python
+package installed from that checkout:</p>
+<pre><code class="language-bash">python -m pip install -e ./python
+python benchmarks/snapshot/verify_manuscript.py \
+  --output benchmarks/results/snapshot_manuscript.json
+</code></pre>
+<p>The driver and the fixed native-input fixture are versioned. The report is a
+generated local output: <code>benchmarks/results/</code> is created on demand and excluded
+from Git. Each run overwrites the requested output file; choose a different
+<code>--output</code> path to preserve multiple runs.</p>
+<p>The driver calls the public <code>direct_decompose</code>, <code>snapshot_decompose</code>,
+<code>fit_streaming</code>, <code>transform_streaming</code> and <code>backmap_streaming</code> APIs. It performs
+four experiments:</p>
+<table>
+<thead>
+<tr>
+<th>Experiment</th>
+<th>Fixed setup</th>
+<th>Main outputs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prescribed spectrum</td>
+<td>160 observations, 48 samples, six native variables; eigenvalues <span class="arithmatex">\([4,1,1,0.1,0.01,0.001]\)</span></td>
+<td>Positive eigenvalues, complete repeated eigenspaces, native backmaps, orthonormality and residuals</td>
+</tr>
+<tr>
+<td>Geometric audit</td>
+<td>256 observation rows, 64 construction and 128 independent query designs, eight native variables</td>
+<td>Retained variance, native error, modal error, regenerated-geometry error and domain violations</td>
+</tr>
+<tr>
+<td>Conditioning</td>
+<td>Six positive directions spanning 2, 6, 10, 12 and 14 decades</td>
+<td>Resolved rank, eigenvalue error and native error including any discarded directions</td>
+</tr>
+<tr>
+<td>Streamed scale</td>
+<td>1,048,576 rows, 64 construction samples, eight native variables, six retained modes, blocks of 2048 rows</td>
+<td>Exact reader-call bounds, construction and query backmaps, elapsed times and process peak resident memory</td>
+</tr>
+</tbody>
+</table>
+<p>The geometric observations are</p>
+<div class="arithmatex">\[
+y(t;u)=0.12\sin(\pi t)+
+\sum_{j=1}^{8}\frac{0.04}{j^{1.2}}u_j\sin(j\pi t)+
+0.025u_1u_2\sin(9\pi t),
+\qquad u\in[-1,1]^8.
+\]</div>
+<p>The metric is uniform <span class="arithmatex">\(1/Q\)</span>. Native designs are fixed in
+<code>tests/data/snapshot_curve.json</code>: NumPy <code>default_rng(20261020)</code>, first a uniform
+draw of shape <code>(8,64)</code>, then one of shape <code>(8,128)</code>. The explicit fixture removes
+any dependence on another language's random generator or array-filling order.
+The confidence target for the six-mode streamed case is fixed between the
+five-mode and six-mode cumulative fractions of the 256-row case. The large
+case has the same discrete inner products for this sine family, providing an
+independent small resident-data reference for its spectrum and native backmap.</p>
+<p>The JSON output records the protocol, source-file SHA256 values, repository
+revision, whether the working tree was modified, Python and NumPy versions,
+cutoffs and all measured quantities. It uses one numerical-library thread.
+The large case runs in a separate process, so peak resident memory includes the
+interpreter, imported libraries, inputs and temporary arrays without carrying
+allocations from the preceding experiments. Analytical array sizes are reported
+separately. Timings are single observations from that environment, not a repeated
+performance study or measurements of file I/O.</p>
+<p>For a release or manuscript reference, run this protocol on the exact source
+revision being cited, with a clean working tree, and publish the selected report
+as a release attachment. Preserve its recorded provenance and measurements.
+Report publication is a separate step from running the driver; routine local
+outputs should remain unversioned.</p>
+<p>Use <code>--skip-large</code> to run only the smaller checks, or <code>--large-rows Q</code> to change
+the streamed resolution. These arguments are recorded through the output
+dimensions. The retained spectrum and native reconstructions are compared with
+explicit tolerances; no historical manuscript numbers are hard-coded as a
+reference.</p>
+<p>The archived reference scripts used by earlier manuscript drafts are not part
+of these inputs. Sharing a seed does not specify their draw order. Manuscript
+tables and statements about the implementation must use the measured toolkit
+outputs and cite their version, rather than relabelling earlier results.</p>
+<h2 id="benchmark-reproducibility">Benchmark reproducibility</h2>
+<p>Full benchmark runs rely on external datasets.</p>
+<p>These datasets are:</p>
+<ul>
+<li>documented under <code>databases/</code></li>
+<li>distributed via Zenodo</li>
+<li>referenced by benchmark configuration files</li>
+</ul>
+<p>Run a supplied <code>benchmarks/**/case.json</code> with either case runner. Missing data
+are obtained from the matching <code>databases/&lt;name&gt;/dataset.json</code> metadata. For a
+manual download, extract the archive and set the configuration paths relative
+to its case directory. The examples explicitly set <code>solver="auto"</code>; existing
+inputs that omit the field still default to that choice. Set <code>direct</code> and
+<code>snapshot</code> explicitly when comparing their numerical results on the same case.</p>
+<h3 id="zenodo-regression-against-the-preceding-implementation">Zenodo regression against the preceding implementation</h3>
+<p>The <a href="../zenodo-regression/">Zenodo airfoil regression</a> compares PME, PI-PME and
+PD-PME on the complete published RAE2822 database with the unchanged
+implementation at commit <code>68309805e9aff5a9b877c33982c7181d8faa550b</code>. It checks the
+dataset hash, uses the existing standard-case sample filters, and does not take
+a smaller sample subset for the snapshot calculation.</p>
+<p>The regression checks explained variance, resolved positive eigenvalues,
+weighted eigenvectors and native backmaps against both the historical solver
+and an independent symmetric direct reference. It aligns isolated eigenvectors
+by sign and compares repeated clusters through their invariant subspaces.
+Current and historical MATLAB exports can be included in the same report.
+The linked protocol documents the exact dataset, tolerances, commands and CI
+artifacts. This full-dataset check is separate from the small unit suite.</p>
+<hr />
+<h2 id="configuration-driven-workflow">Configuration-driven workflow</h2>
+<p>Standard case experiments use JSON configuration files. The controlled
+streaming experiments use the versioned verification driver and the explicit
+native-sample fixture described above.</p>
+<p>This ensures:</p>
+<ul>
+<li>reproducibility across environments  </li>
+<li>transparency of preprocessing and methods  </li>
+<li>portability of experiments  </li>
+</ul>
+<hr />
+<h2 id="notes">Notes</h2>
+<ul>
+<li>results depend on dataset version and configuration  </li>
+<li>ensure consistency between dataset and JSON specification  </li>
+<li>benchmark cases provide reference configurations for reproducibility  </li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
