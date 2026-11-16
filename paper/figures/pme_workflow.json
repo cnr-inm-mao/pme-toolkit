@@ -1,0 +1,37 @@
+{
+  "dataset_doi": "10.5281/zenodo.18958555",
+  "database_sha256": "a662f691c90158503ad627d1e4c36edafe566ec2fedb2ef3cadaacbb509cc177",
+  "database_shape": [
+    410,
+    16385
+  ],
+  "case": "benchmarks/standard/pme/airfoil/case.json",
+  "case_sha256": "055ac001313392dd9c04cd8f4647a51af6028ab3eaaf452efc42850355cc221d",
+  "samples": 8516,
+  "native_parameters": 20,
+  "retained_coordinates": 5,
+  "retained_geometric_variance": 0.9517778286473733,
+  "shown_original_columns_zero_based": [
+    0,
+    2,
+    1080,
+    2138,
+    3220,
+    4297,
+    5397,
+    6495,
+    7586,
+    8737,
+    9812,
+    10938,
+    12010,
+    13107,
+    14163,
+    15316,
+    16384
+  ],
+  "highlighted_original_column_zero_based": 2,
+  "highlight_selection": "First retained non-baseline sample, independent of backmap error",
+  "native_parameter_units": "Original archived values, not normalized values",
+  "geometry_generator_executed": false
+}
