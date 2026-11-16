@@ -8,7 +8,7 @@ A dataset typically includes:
 
 - geometric data
 - design variables
-- optional physical quantities (PI-PME / PD-PME)
+- physical quantities (required for PI-PME / PD-PME)
 
 ---
 
@@ -40,11 +40,10 @@ Typical cases:
 - 2D geometry → stacked coordinates
 - 3D geometry → flattened mesh nodes
 
-Example:
-
-    [x1, x2, ..., xN
-     y1, y2, ..., yN
-     z1, z2, ..., zN]
+Within each geometry patch, rows store all point coordinates in the first
+direction, then the second direction, and then the third when present.
+Columns remain design samples. Thus a 3D patch with `K` points contributes
+`3*K` rows; multiple patches follow the order in `geom.patches`.
 
 ---
 
@@ -62,28 +61,33 @@ These correspond to the original parametric model and are explicitly included in
 
 ## PME embedding matrix
 
-PME internally constructs:
+The fitting matrix depends on `mode`:
 
 $$
-\mathbf{P} =
-\begin{bmatrix}
-\mathbf{D} \\
-\mathbf{U}
-\end{bmatrix}
+\mathbf{P}_{\mathrm{PME}}=[\mathbf{D};\mathbf{U}],\qquad
+\mathbf{P}_{\mathrm{PI}}=[\mathbf{D};\mathbf{U};\mathbf{F};\mathbf{C}],\qquad
+\mathbf{P}_{\mathrm{PD}}=[\mathbf{U};\mathbf{F};\mathbf{C}].
 $$
 
-This is the matrix used for dimensionality reduction.
+Here `U` contains the prepared active design variables, `F` the configured
+physical fields and `C` the scalar responses. The input database retains its
+configured row layout in all three modes; PD-PME excludes geometry when
+constructing the fitting matrix. Both solvers use the same matrix and metric.
 
 ---
 
 ## Optional physical data
 
-For PI-PME / PD-PME, additional matrices may be included:
+PI-PME and PD-PME require at least one configured physical source, such as:
 
 - pressure fields
 - performance indicators
 
-These are appended as additional rows in P, extending the embedding with physical information.
+Fields and scalars are included in the order specified by `phys.fields` and
+`phys.scalars`. Native rows have zero metric weight but are retained in the
+recovered modes for analytical backmapping. See [Configuration](config_spec.md)
+for the required physics declarations and [Snapshot formulation](snapshot.md)
+for mode recovery.
 
 ---
 

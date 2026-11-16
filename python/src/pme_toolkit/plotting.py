@@ -7,7 +7,8 @@ from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .model import PmeModel
+from .model import PmeModel, _w_as_diag
+from .report import _total_variance
 
 plt.rcParams.update(
     {
@@ -84,7 +85,7 @@ def _ninf(model: PmeModel) -> int:
 def _kplot(model: PmeModel) -> int:
     mact = _mact(model)
     lam = _as_1d(model.eigvals_full)
-    return int(min(mact, lam.size))
+    return int(min(max(mact, int(model.nconf)), lam.size))
 
 
 def _p_blocks(model: PmeModel) -> dict[str, np.ndarray]:
@@ -333,12 +334,15 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
             "var_p": np.zeros((0, kplot), dtype=float),
             "nmse_global": np.zeros((kplot,), dtype=float),
             "ev_global": np.zeros((kplot,), dtype=float),
+            "retained_variance": np.zeros((kplot,), dtype=float),
             "lam_cum_ninf": np.zeros((kplot,), dtype=float),
         }
 
     pc = np.asarray(model.pc, dtype=float)
     z_full = np.asarray(model.z_full, dtype=float)
-    w = np.asarray(model.w, dtype=float)
+    w = _w_as_diag(model.w)
+    total_variance = _total_variance(model)
+    denominator = total_variance if total_variance > 0.0 else np.finfo(float).eps
 
     var_src = np.zeros((ninf,), dtype=float)
     for i, src in enumerate(sources):
@@ -346,13 +350,16 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
         var_src[i] = float(np.sum(np.var(pc[rr, :], axis=1, ddof=0)))
 
     nmse_t = np.zeros((ninf, kplot), dtype=float)
+    nmse_global = np.zeros(kplot, dtype=float)
 
     for jconf in range(1, kplot + 1):
         k = jconf
         zk = z_full[:, :k]
-        ak = pc.T @ w @ zk
+        ak = pc.T @ (w[:, None] * zk)
         prec = zk @ ak.T
         e = pc - prec
+        weighted_mse = float(np.einsum("ij,i,ij->", e, w, e)) / pc.shape[1]
+        nmse_global[jconf - 1] = weighted_mse / denominator
 
         for i, src in enumerate(sources):
             rr = src.rows
@@ -360,6 +367,7 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
             nmse_t[i, jconf - 1] = mse_block / max(var_src[i], np.finfo(float).eps)
 
     var_t = 1.0 - nmse_t
+    var_t[var_src == 0.0, :] = 0.0
 
     var_p = np.zeros_like(var_t)
     if kplot >= 1:
@@ -367,11 +375,10 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
     if kplot >= 2:
         var_p[:, 1:] = var_t[:, 1:] - var_t[:, :-1]
 
-    nmse_global = np.mean(nmse_t, axis=0)
     ev_global = 1.0 - nmse_global
 
     lam = _as_1d(model.eigvals_full)
-    lam_cum = np.cumsum(lam[:kplot]) / max(float(ninf), np.finfo(float).eps)
+    lam_cum = np.cumsum(lam[:kplot]) / denominator
 
     return {
         "enable": True,
@@ -383,6 +390,7 @@ def _reconstruction_curves(model: PmeModel) -> dict[str, Any]:
         "var_p": np.real(var_p),
         "nmse_global": np.real(nmse_global),
         "ev_global": np.real(ev_global),
+        "retained_variance": np.real(lam_cum),
         "lam_cum_ninf": np.real(lam_cum),
     }
 
@@ -401,7 +409,7 @@ def plot_scree_plot(model: PmeModel, outdir: str | Path | None = None) -> None:
     if lam.size == 0:
         return
 
-    mplot = min(_mact(model), lam.size)
+    mplot = _kplot(model)
     x = np.arange(1, mplot + 1, dtype=int)
     y = lam[:mplot]
 
@@ -455,14 +463,15 @@ def plot_variance_retained(model: PmeModel, outdir: str | Path | None = None) ->
 
     lam = _as_1d(model.eigvals_full)
     nconf = int(model.nconf)
-    kmax = min(_mact(model), lam.size)
-    ninf = _ninf(model)
+    kmax = _kplot(model)
 
     if kmax < 1:
         return
 
     x = np.arange(1, kmax + 1, dtype=int)
-    cum_pct = 100.0 * np.cumsum(lam[:kmax]) / max(float(ninf), np.finfo(float).eps)
+    total_variance = _total_variance(model)
+    denominator = total_variance if total_variance > 0.0 else np.finfo(float).eps
+    cum_pct = 100.0 * np.cumsum(lam[:kmax]) / denominator
 
     fig, ax = plt.subplots(figsize=(7.2, 5.0), facecolor="white")
 

@@ -3,6 +3,7 @@ function cfg = defaults(cfg)
 if ~isfield(cfg,'mode'), cfg.mode = "pme"; end
 pme.validate_physics_config(cfg);
 if ~isfield(cfg,'CI'), cfg.CI = 0.99; end
+if ~isfield(cfg,'solver'), cfg.solver = "auto"; end
 if ~isfield(cfg,'baseline_col'), cfg.baseline_col = 1; end
 
 % geom

@@ -1,5 +1,6 @@
 {
   "mode": "pme",
+  "solver": "auto",
   "CI": 0.95,
   "baseline_col": 0,
   "geom": {

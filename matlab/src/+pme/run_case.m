@@ -38,7 +38,7 @@ pme.ensure_case_inputs(casefile);
 % ----------------------------
 % 1) Read config + defaults
 % ----------------------------
-cfg = pme.read_case_json(casefile);
+cfg = pme.defaults(pme.read_case_json(casefile));
 
 % Override output directory from caller, if provided
 if strlength(outdir_override) > 0
@@ -109,16 +109,13 @@ end
 
 assert(isfile(dbfile), 'Database file not found: %s', dbfile);
 
-try
-    [DB, meta] = pme.load_db(dbfile, struct('transpose_if', cfg.io.transpose_if));
-catch
-    [DB, meta] = pme.load_db(dbfile);
-end
+[DB, meta] = pme.load_db(dbfile, struct('transpose_if', "never"));
 
 % ----------------------------
 % 4) Ensure orientation (rows=Nfeatures, cols=Nsamples)
 % ----------------------------
-DB = enforce_db_orientation(DB, layout, cfg.io.transpose_if);
+[DB, meta.transposed] = enforce_db_orientation(DB, layout, cfg.io.transpose_if);
+meta.size = size(DB);
 
 % ----------------------------
 % 5) Filters (ONCE) + keep mask
@@ -138,7 +135,13 @@ end
 % ----------------------------
 % 6) Fit model on DB_used (NO filtering inside fit)
 % ----------------------------
-model = pme.fit(DB_used, cfg, layout);
+fit_cfg = cfg;
+kept_columns = find(mask);
+fit_cfg.baseline_col = find(kept_columns == cfg.baseline_col, 1);
+if isempty(fit_cfg.baseline_col)
+    error('pme:Baseline', 'Baseline column was removed by filtering.');
+end
+model = pme.fit(DB_used, fit_cfg, layout);
 
 % Attach mask + filterInfo for downstream consistency
 model.filterMask = mask;
@@ -192,15 +195,20 @@ end
 
 % ======================================================================
 
-function DB = enforce_db_orientation(DB, layout, transpose_if)
+function [DB, transposed] = enforce_db_orientation(DB, layout, transpose_if)
 % Ensure DB is [layout.totalRows x S] (features x samples).
 % transpose_if: "never" | "always" | "auto"
 
 tr = lower(string(transpose_if));
 Nwant = layout.totalRows;
+if ~isscalar(tr) || ~any(tr == ["auto", "never", "always"])
+    error('pme:Orientation', 'transpose_if must be auto, never, or always.');
+end
+transposed = false;
 
 if tr == "always"
     DB = DB.';
+    transposed = true;
     return;
 elseif tr == "never"
     return;
@@ -213,6 +221,7 @@ if nr == Nwant
 end
 if nc == Nwant
     DB = DB.';
+    transposed = true;
     return;
 end
 

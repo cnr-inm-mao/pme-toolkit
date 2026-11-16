@@ -4,9 +4,10 @@ PME-toolkit automatically generates visualization figures during the benchmark w
 
 These figures help interpret the dimensionality reduction results produced by PME, PI-PME, and PD-PME and evaluate the quality of the reduced representation.
 
-The figures shown in this page are example outputs generated from the glider benchmark dataset.
+The figures on this page illustrate the glider and airfoil benchmark outputs.
 
-All plots are automatically produced during the execution of a benchmark case and stored in the `results/` directory.
+The normal MATLAB and Python case workflows generate plots in `io.outdir`.
+The Python runner also provides `--no-plots` to skip figures.
 
 ---
 
@@ -14,7 +15,8 @@ All plots are automatically produced during the execution of a benchmark case an
 
 Visualization figures are generated automatically when running a benchmark case.
 
-After execution, the `results/` directory contains the generated outputs including figures and report data.
+After execution, the configured output directory contains the generated figures
+and report data. Relative output paths are interpreted from the case directory.
 
 A typical results directory contains files such as:
 
@@ -26,18 +28,26 @@ results/
 - variance_by_source.png
 - nmse_by_source.png
 - variable_modes_normalized.png
-- mode_1.png
-- mode_2.png
-- mode_3.png
+- mode_01.png
+- mode_02.png
+- mode_03.png
 ```
 
-The exact files may vary depending on the benchmark configuration and workflow.
+Model saving adds `model.npz` in Python or `model.mat` in MATLAB. The exact
+files depend on the configuration and available source blocks. In particular,
+PD-PME does not generate geometric-mode figures because its embedding excludes
+geometry.
+
+`direct`, `snapshot` and `auto` use the same plotting functions and output
+names. The physical modes recovered by snapshot are used in the figures;
+the eigenvectors of the sample Gram matrix are not plotted as geometry.
 
 ---
 
 ## Eigenvalue spectrum (Scree plot)
 
 The scree plot shows the eigenvalue spectrum associated with the embedding.
+Only the numerically resolved positive spectrum is returned and plotted.
 
 ![Eigenvalue spectrum](images/scree_plot.png)
 
@@ -62,7 +72,11 @@ Typical thresholds used in dimensionality reduction include:
 - 95% retained variance
 - 99% retained variance
 
-The selected dimensionality corresponds to the smallest number of modes that satisfies the chosen threshold.
+The denominator is the full weighted trace before numerical-rank truncation.
+The selected dimension reaches the requested threshold while keeping the
+complete eigenvalue cluster at the boundary. When unresolved variance prevents
+the target from being reached, all resolved modes are retained and the achieved
+fraction is reported.
 
 ---
 
@@ -91,6 +105,8 @@ The normalized mean squared reconstruction error (NMSE) can also be analyzed sep
 This plot indicates how accurately the reduced representation reconstructs each component of the dataset.
 
 Lower NMSE values indicate better reconstruction accuracy.
+The global NMSE uses weighted residual energy with the same metric as fitting.
+Constant sources contribute no variance to the retained-variance curves.
 
 This visualization is useful to compare reconstruction quality across heterogeneous data sources.
 
@@ -118,13 +134,20 @@ The geometric interpretation of the reduced coordinates can be visualized throug
 
 <p align="center"><em>Example of first geometric mode of the PME embedding for the airfoil benchmark.</em></p>
 
-In these figure:
+The mode perturbations use the baseline geometry and the geometric part of the
+recovered mode, with amplitude `3*sqrt(lambda)`. Reversing an eigenvector's sign
+exchanges the positive and negative curves. Repeated eigenvalues can admit
+different modal bases for the same subspace.
+
+In this figure:
 
 - the black curve represents the baseline configuration
 - the blue curve represents the positive perturbation along the mode
 - the red curve represents the negative perturbation
 
-This visualization provide an intuitive interpretation of how each reduced coordinate modifies the original geometry.
+This visualization provides an interpretation of how each reduced coordinate
+modifies the original geometry. For PD-PME, geometric reconstruction instead
+requires native backmapping and the user's geometry generator.
 
 ---
 
@@ -149,6 +172,10 @@ Together, these visualizations support both quantitative evaluation and qualitat
 
 The exact appearance and number of generated figures depend on the selected benchmark configuration and the information sources included in the embedding.
 
-Visualization is handled internally by the MATLAB workflow and is automatically executed during the benchmark run.
+Visualization is included in both language workflows. The advanced
+`fit_streaming` API returns a compact native model and does not automatically
+produce this standard plot set. Geometric plots from streamed fits require
+recovered observation modes and the corresponding geometry metadata; an
+optional mode writer can save those modes without retaining them all in memory.
 
 For benchmark setup and execution, see the documentation pages on Benchmarks, Datasets, and Reproducibility.

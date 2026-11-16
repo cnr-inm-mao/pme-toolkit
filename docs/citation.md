@@ -49,8 +49,6 @@ Representative references include:
 
 ## Software paper
 
-A software paper describing PME-toolkit has been submitted to JOSS and is currently under review.
-
-The draft is available at:
+A draft software paper describing PME-toolkit is available at:
 
     paper/paper.md

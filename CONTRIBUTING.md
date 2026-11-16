@@ -74,19 +74,30 @@ git checkout -b feature/my_feature
 # Testing
 
 Before submitting a pull request, please run the repository tests.
+Run the following commands from the repository root.
 
 ### MATLAB
 
 ```
-run("tests/run_tests.m")
+matlab -batch "run('tests/matlab/run_tests.m')"
 ```
 
 ### Python
 
 ```
-cd python
-PYTHONPATH=src pytest -q
+python -m pip install -e './python[dev]'
+python -m pytest tests/python -q
 ```
+
+### Documentation
+
+```sh
+python -m pip install mkdocs mkdocs-material
+python -m mkdocs build --strict
+```
+
+Pull requests build the documentation without publishing it. Changes merged
+into `main` are published only after the strict build succeeds.
 
 ---
 
@@ -97,6 +108,9 @@ When adding new benchmark cases:
 * place them under `benchmarks/`
 * include a README describing the case
 * document dataset dependencies in `databases/`
+* set `solver` explicitly (`auto` for the usual workflow), along with `CI`
+* keep MATLAB/Python input semantics aligned and describe the validation
+  actually performed for the case
 
 Large datasets should **not be stored directly in Git**.
 

@@ -11,6 +11,8 @@ from .config_loader import load_case_json, load_config
 from .layout import parse_layout
 from .io import load_mat_database, load_mat_range
 from .model import PmeModel, fit_from_case, fit_model, fit_pme
+from .snapshot import decompose, direct_decompose, snapshot_decompose
+from .streaming import backmap_streaming, fit_streaming, transform_streaming
 from .report import build_report, print_report
 from .plotting import (
     plot_scree_plot,
@@ -23,7 +25,7 @@ from .plotting import (
     source_colors,
 )
 from .filters import apply_filters, FilterResult
-from .weights import build_weights, build_wf, build_wc
+from .weights import build_weights, build_weights_diag, build_wf, build_wc
 from .datasets import ensure_case_inputs
 
 __all__ = [
@@ -36,6 +38,12 @@ __all__ = [
     "fit_model",
     "fit_pme",
     "fit_from_case",
+    "snapshot_decompose",
+    "direct_decompose",
+    "decompose",
+    "fit_streaming",
+    "transform_streaming",
+    "backmap_streaming",
     "build_report",
     "print_report",
     "plot_scree_plot",
@@ -49,6 +57,7 @@ __all__ = [
     "apply_filters",
     "FilterResult",
     "build_weights",
+    "build_weights_diag",
     "build_wf",
     "build_wc",
     "ensure_case_inputs",

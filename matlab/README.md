@@ -15,6 +15,11 @@ within the current **shape-optimization** scope of the project.
 
 The implementation is fully integrated in the **JSON-driven workflow** used across the repository.
 
+The v1.3.0 fitting workflow accepts `solver="auto"`, `"direct"` or
+`"snapshot"` in the shared case JSON. The field is optional and defaults to
+`auto`; all distributed fitting examples declare it explicitly. Both solvers
+use the same preprocessing, metric, mode selection and model interface.
+
 ## Role within PME-toolkit
 
 PME-toolkit provides a **dual MATLAB/Python implementation**.
@@ -65,14 +70,28 @@ These mirror the benchmark workflow and automatically handle:
 - output directory resolution
 - model persistence for backmapping
 
+Set `io.save_model=true` in the fitting case when a subsequent backmapping
+run needs `model.mat`. Both the direct API and `run_pme` honor this setting.
+
 ## Outputs
 
 Running a PME case generates:
 
-- `model.mat` → reduced model (used for backmapping)
+- `model.mat` → reduced model when `io.save_model=true` (used for backmapping)
 - `report.mat` → summary of the reduction (including `nconf`, NMSE, etc.)
 
 Outputs are written to the `outdir` specified in the JSON case file.
+Relative paths are resolved against the JSON file's directory.
+
+## Streamed observations
+
+`pme.fit_streaming`, `pme.transform_streaming` and `pme.backmap_streaming`
+provide a reader-based snapshot workflow for observations stored or generated
+in row blocks. The usual `pme.run_case` workflow keeps the input database in
+memory even when `solver="snapshot"`. See the
+[MATLAB API](../docs/matlab_api.md) and
+[streamed formulation](../docs/snapshot.md#streamed-observations-and-compact-native-models)
+for the reader, weight and native-variable contracts.
 
 ## Datasets
 
@@ -96,6 +115,11 @@ The test suite includes:
 - PME execution
 - backmapping
 - regression consistency checks
+- direct/snapshot agreement, numerical rank and repeated eigenvalue clusters
+- streamed fitting, query projection and native backmapping
+
+CI also compares current MATLAB/Python outputs and runs the complete Zenodo
+airfoil regression described in [Reproducibility](../docs/reproducibility.md).
 
 ## Status
 

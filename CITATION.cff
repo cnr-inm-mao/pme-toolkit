@@ -2,6 +2,10 @@ cff-version: 1.2.0
 title: PME-toolkit
 message: "If you use this software, please cite it as below."
 type: software
+abstract: >-
+  MATLAB and Python implementations of Parametric Model Embedding (PME),
+  Physics-Informed PME and Physics-Driven PME for design-space dimensionality
+  reduction, with analytical reconstruction of the original design variables.
 
 authors:
   - family-names: Serani
@@ -13,5 +17,5 @@ repository-code: https://github.com/cnr-inm-mao/pme-toolkit
 url: https://cnr-inm-mao.github.io/pme-toolkit
 license: MIT
 
-version: 1.2.0
-date-released: 2026-03-17
+version: 1.3.0
+date-released: 2026-11-16

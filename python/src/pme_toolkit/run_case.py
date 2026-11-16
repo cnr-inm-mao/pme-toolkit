@@ -10,7 +10,8 @@ import numpy as np
 
 from .config_loader import load_case_json
 from .filters import apply_filters
-from .io import load_mat_database, load_mat_range
+from .io import load_mat_database, load_mat_range, orient_database
+from .layout import parse_layout
 from .model import fit_pme
 from .plotting import save_all_plots
 from .report import build_report, print_report
@@ -24,7 +25,7 @@ def _resolve_outdir(cfg: dict[str, Any], base_dir: Path, outdir_override: str | 
     Priority:
     1. explicit override
     2. cfg["io"]["outdir"] if present
-    3. <case_dir>/results_py
+    3. <case_dir>/results
     """
     if outdir_override is not None:
         return Path(outdir_override).expanduser().resolve()
@@ -35,7 +36,7 @@ def _resolve_outdir(cfg: dict[str, Any], base_dir: Path, outdir_override: str | 
     if outdir:
         return Path(outdir).expanduser().resolve()
 
-    return (base_dir / "results_py").resolve()
+    return (base_dir / "results").resolve()
 
 
 def run_case(
@@ -57,7 +58,7 @@ def run_case(
     - fit model on DB_used
     - print report
     - save plots
-    - save JSON/NPZ artifacts
+    - save the report and, when requested, the model
     """
     case_path = Path(case_json).expanduser().resolve()
     cfg, base_dir = load_case_json(case_path)
@@ -71,15 +72,14 @@ def run_case(
     if not dbfile:
         raise ValueError("cfg.io.dbfile is required")
 
-    db = load_mat_database(dbfile)
+    layout = parse_layout(cfg)
+    db = orient_database(
+        load_mat_database(dbfile), layout["totalRows"],
+        io_cfg.get("transpose_if", "auto"),
+    )
 
     urange_file = vars_cfg.get("Urange_file")
     urange = load_mat_range(urange_file) if urange_file else None
-
-    # layout is needed by filters, but fit_pme already computes it internally.
-    # To avoid duplicating parse_layout import here, retrieve it through model module logic:
-    from .layout import parse_layout
-    layout = parse_layout(cfg)
 
     filt = apply_filters(db, cfg, layout)
     db_used = filt.db_used
@@ -107,20 +107,22 @@ def run_case(
         save_all_plots(model, outdir=outdir, n_modes=n_modes_plot)
 
     report_path = outdir / "report.mat"
-    model_path = outdir / "model.npz"
-
     savemat(report_path, {"report": report})
-    model.save(model_path)
-
     saved = {
         "report_mat": str(report_path),
-        "model_npz": str(model_path),
     }
+    if io_cfg.get("save_model", True):
+        model_path = outdir / "model.npz"
+        model.save(model_path)
+        saved["model_npz"] = str(model_path)
 
     print()
     print(f"[run_case.py] output directory: {outdir}")
     print(f"[run_case.py] saved report:     {report_path.name}")
-    print(f"[run_case.py] saved model:      {model_path.name}")
+    if "model_npz" in saved:
+        print(f"[run_case.py] saved model:      {Path(saved['model_npz']).name}")
+    else:
+        print("[run_case.py] model persistence disabled")
     if save_plots:
         print("[run_case.py] saved plots:      scree_plot.png, variance_retained.png, "
               "nmse_by_source.png, variance_by_source.png, "

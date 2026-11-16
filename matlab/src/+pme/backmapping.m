@@ -89,7 +89,7 @@ if ~isfield(caseCfg.io,'outdir') || strlength(string(caseCfg.io.outdir))==0
 end
 
 outdir = string(caseCfg.io.outdir);
-if ~isfolder(outdir) && ~isAbsolutePath(outdir)
+if ~isAbsolutePath(outdir)
     outdir = string(fullfile(case_dir, outdir));
 end
 

@@ -7,7 +7,8 @@ function cfg = read_case_json(jsonFile)
 %
 % Conventions:
 % - Indices in JSON are 0-based (Python-friendly). MATLAB converts to 1-based:
-%   * cfg.baseline_col
+%   * cfg.baseline_col (default 0 in JSON)
+%   * cfg.filters.goal.baseline_col, when supplied
 %   * cfg.filters.goal.metrics(:).c_offset
 %
 % Supported optional fields:
@@ -62,8 +63,16 @@ if isfield(cfg.vars,'Urange_file') && ~isempty(cfg.vars.Urange_file)
 end
 
 % ---- indices: JSON 0-based -> MATLAB 1-based
-if isfield(cfg,'baseline_col') && ~isempty(cfg.baseline_col)
-    cfg.baseline_col = cfg.baseline_col + 1;
+if ~isfield(cfg,'baseline_col'), cfg.baseline_col = 0; end
+validateattributes(cfg.baseline_col, {'numeric'}, ...
+    {'real','finite','scalar','integer','nonnegative'}, mfilename, 'baseline_col');
+cfg.baseline_col = cfg.baseline_col + 1;
+
+if isfield(cfg,'filters') && isfield(cfg.filters,'goal') && ...
+        isfield(cfg.filters.goal,'baseline_col')
+    validateattributes(cfg.filters.goal.baseline_col, {'numeric'}, ...
+        {'real','finite','scalar','integer','nonnegative'}, mfilename, 'filters.goal.baseline_col');
+    cfg.filters.goal.baseline_col = cfg.filters.goal.baseline_col + 1;
 end
 
 % idx_active: JSON 0-based -> MATLAB 1-based

@@ -4,8 +4,8 @@ function out = run_pme(casefile, outdir)
 %   OUT = RUN_PME(CASEFILE)
 %   OUT = RUN_PME(CASEFILE, OUTDIR)
 %
-% Runs pme.run_case on the given JSON case and saves model.mat alongside
-% report.mat for subsequent MATLAB backmapping workflows.
+% Runs pme.run_case on the given JSON case. Model persistence follows
+% cfg.io.save_model (true by default); reporting follows cfg.report.enable.
 
     if nargin < 1 || strlength(string(casefile)) == 0
         casefile = "benchmarks/standard/pme/glider/case.json";
@@ -23,17 +23,5 @@ function out = run_pme(casefile, outdir)
     else
         out = pme.run_case(casefile, "outdir", string(outdir));
     end
-
-    assert(isstruct(out), "run_pme output is not a struct")
-    assert(isfield(out, "model"), "run_pme output does not contain field 'model'")
-    assert(isfield(out, "outdir"), "run_pme output does not contain field 'outdir'")
-
-    model = out.model; %#ok<NASGU>
-
-    outdir_final = string(out.outdir);
-    model_path = fullfile(outdir_final, "model.mat");
-    save(model_path, "model", "-v7");
-
-    fprintf("[run_pme] wrote %s\n", model_path);
 
 end

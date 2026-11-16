@@ -7,7 +7,65 @@ and semantic versioning principles.
 
 ---
 
-## [Unreleased]
+## [1.3.0] - 2026-11-16
+
+### Added
+
+- Symmetric snapshot Gram eigensolvers for PME, PI-PME and PD-PME in both
+  MATLAB and Python, building on Antoine DeBlois's
+  [PR #1](https://github.com/cnr-inm-mao/pme-toolkit/pull/1). The complete
+  lifted modes retain the zero-weight native components used by backmapping.
+- Vector weight storage and bounded row-block Gram assembly, avoiding dense
+  weight matrices. The regular case workflow keeps construction data in memory.
+- `solver="auto"|"direct"|"snapshot"` in both languages. The default `auto`
+  chooses the smaller symmetric eigenproblem; direct fitting operates only
+  on positive-weight observation rows and recovers native modes separately.
+- True row-reader snapshot fitting, native-only compact models, optional
+  observation-mode writers, and cross-Gram query projection in both languages.
+  Streaming centers each observation using the construction samples and keeps
+  the source metric fixed across storage blocks.
+- Shared `snapshot` options for numerical rank, absolute and relative
+  eigenvalue cutoffs, repeated-eigenvalue clusters and row-block size.
+- Controlled-spectrum direct-reference tests and a common PME/PI/PD fixture
+  for comparison of current MATLAB and Python outputs in CI.
+- Regression against the unchanged pre-snapshot implementation on the complete
+  Zenodo airfoil database, covering PME, PI-PME and PD-PME, with actual MATLAB
+  and Python comparison in a dedicated workflow.
+- A reproducible manuscript verification driver and shared curve inputs for
+  the 1,048,576-coordinate streamed fit and analytical native backmapping.
+- Strict documentation builds on pull requests; publishing remains limited
+  to validated pushes to `main`.
+
+### Changed
+
+- Replace the augmented nonsymmetric direct eigensolve with a symmetric
+  solve on positive-weight observations. Direct and snapshot are two solvers
+  within one fitting pipeline, with shared rank and variance-selection rules;
+  the previous direct code is used only from a pinned regression revision.
+- Make the public dense weight builders compatibility wrappers over the
+  diagonal builders in both languages, keeping one source-weight implementation.
+- Declare `solver="auto"` in all eleven benchmark cases and the bundled tiny
+  example. Omitted solver fields remain supported in both languages.
+- Align omitted Python fitting defaults with MATLAB: `CI=0.99` and
+  `vars.use_db_range_if_missing=true`. Explicit settings are unchanged.
+- Use `results` under the fitting case directory as the shared default output
+  location, including standalone backmapping.
+- Enable model saving in the bundled tiny example for the documented fitting
+  and backmapping workflow.
+- Lift only resolved positive modes and keep complete eigenvalue clusters at
+  the automatic retention boundary. Datasets with no resolved positive
+  weighted variance now raise a clear error.
+- Measure confidence and global variance retention against the full Gram
+  trace, including variance excluded by numerical rank truncation. An
+  unattainable confidence target produces a warning and achieved-retention
+  diagnostics.
+- Store `model.W`/`model.w` as a diagonal vector in newly fitted models.
+  Legacy dense saved weights remain supported. Explicit dense weight-builder
+  functions are retained for compatibility. Full-spectrum diagnostic arrays
+  now contain only the resolved positive spectrum.
+- Compute global reconstruction NMSE from weighted residual energy. Constant
+  sources contribute no retained variance, and diagnostic curves include
+  the selected dimension even when it exceeds the number of native variables.
 
 ### Fixed
 
@@ -18,14 +76,29 @@ and semantic versioning principles.
   loading/downloads and in direct fitting calls. Regression tests cover
   invalid configurations, valid field-only/scalar-only cases, and standard
   PME without physics.
+- Qualify MATLAB's `pme.slice` call in direct model transformation.
+- Use zero-based baseline indices consistently in Python configurations and
+  preserve the selected baseline through filtering in both languages.
+- Apply `io.transpose_if` once in the case workflow, including explicit
+  transposition and layout-based automatic orientation.
+- Honor `io.save_model` in Python and the MATLAB wrapper instead of saving
+  unconditionally. In-memory models remain available from the runner result.
+- Resolve relative MATLAB backmapping output directories against the case
+  directory even when an identically named directory exists elsewhere.
+- Correct installation and test commands, backmapping examples, output
+  descriptions and validation claims across the website and repository guides.
+- Include the complete MIT license in Python source and wheel distributions,
+  with standard SPDX license metadata.
 
-### Planned
+### Scope
 
-- Synchronize website pages and docs text with the actual dual MATLAB/Python status of the repository
-- Extend cross-language regression coverage beyond the tiny glider case
-- Broaden benchmark/test coverage for PME, PI-PME, and PD-PME cases
-- Further refine JOSS-facing documentation and review readiness material
-- Consolidate packaging, release, and citation workflows after the first PyPI/JOSS cycle
+- The standard case loader continues to read its database into memory. The
+  advanced streaming API accepts replayable observation and weight readers,
+  so procedural, mapped, or file-backed data can be processed without loading
+  the complete observation matrix. Source-specific normalization is fixed
+  before fitting, using a preliminary pass when needed.
+- See [Snapshot formulation](docs/snapshot.md) for equations, compatibility
+  changes, conditioning, solver selection, and the two storage models.
 
 ---
 

@@ -39,6 +39,7 @@ The workflow is fully defined through a JSON file.
 A standard run configuration specifies:
 
 - method (`mode`)
+- eigensolver (`solver`: `auto`, `direct` or `snapshot`)
 - retained variance (`CI`)
 - geometry definition (`geom`)
 - design variables (`vars`)
@@ -47,6 +48,8 @@ A standard run configuration specifies:
 - input/output settings (`io`)
 
 This JSON file is the central entry point of the workflow.
+Existing inputs may omit `solver`; both implementations then use `auto`.
+The distributed fitting examples declare it explicitly.
 
 See the *Configuration specification* page.
 
@@ -58,7 +61,7 @@ Before dimensionality reduction, the dataset may be filtered and normalized.
 
 Available preprocessing steps include:
 
-- NaN removal
+- removal of samples containing nonfinite values
 - goal-oriented filtering
 - IQR-based filtering
 - variable-range handling
@@ -85,6 +88,17 @@ Typical values are:
 - `0.99`
 
 The result is a reduced latent representation of the original design space.
+The `solver` choice changes the eigensolve and mode recovery within this common
+workflow. `direct` solves the weighted covariance on positive-weight observation
+rows; `snapshot` solves the sample Gram matrix; `auto` chooses the smaller one.
+Both share the same numerical-rank cutoff and use the full weighted trace as
+the retained-variance denominator. The selection includes a complete repeated
+eigenvalue cluster at the confidence boundary. If the resolved spectrum cannot
+reach `CI`, the model reports the achieved fraction and emits a warning.
+
+The standard case runner loads the full database into memory. Selecting
+`snapshot` does not switch the file loader to streaming. For observations read
+from disk or generated in blocks, use the [streamed API](snapshot.md#streamed-observations-and-compact-native-models).
 
 ---
 
@@ -104,6 +118,9 @@ Results are typically written under:
     results/
 
 depending on the `io.outdir` setting.
+Relative paths in the fitting configuration are interpreted from the directory
+containing that configuration. Model files are `model.npz` in Python and
+`model.mat` in MATLAB; both workflows produce `report.mat`.
 
 ---
 
@@ -120,6 +137,11 @@ Typical outputs include:
 - variable participation
 - geometric modes
 
+These plot families are shared by direct and resident snapshot fitting.
+PD-PME does not include a geometry block in its embedding and therefore does
+not produce geometric-mode plots. The compact streaming API requires an
+observation-mode writer and geometry metadata for corresponding mode plots.
+
 See the *Visualization* page.
 
 ---
@@ -133,6 +155,8 @@ Backmapping requires:
 - the original case configuration
 - reduced coordinates input
 - a dedicated backmapping JSON file
+
+The backmapping file does not need a solver setting: it uses the saved model.
 
 Run it with:
 

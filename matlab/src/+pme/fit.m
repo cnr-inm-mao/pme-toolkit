@@ -40,12 +40,18 @@ filterInfo = struct();
 
 if opts.apply_filters && isfield(cfg,'filters')
     [DB_used, filterInfo, mask] = pme.filters(DB, cfg, layout);
+    kept_columns = find(mask);
+    baseline_local = find(kept_columns == cfg.baseline_col, 1);
+    if isempty(baseline_local)
+        error('pme:Baseline', 'Baseline column was removed by filtering.');
+    end
+    cfg.baseline_col = baseline_local;
 end
 
 % ---- build P-space ----
 blocks = pme.slice(DB_used, layout);
 
-% Prepare vars (should normalize if Urange is provided; you will fix prepare_vars)
+% Prepare active native variables using the configured affine scaling.
 [Uact, Uinfo] = pme.prepare_vars(blocks.Ubase, cfg, blocks, struct('verbose', true));
 
 P = pme.compose_P(blocks.D, Uact, blocks.F, blocks.C, cfg);
@@ -66,34 +72,29 @@ delta   = P - P0;
 delta_m = mean(delta, 2);
 Pc      = delta - delta_m;
 
-% ---- weights ----
-[W, statsW] = pme.weights(delta, layout, cfg, Uinfo, blocks);
-
-% ---- covariance + eig ----
-A  = (Pc*Pc')/S;
-AW = A*W;
-
-[Z, Laux] = eig(AW);
-Lraw = real(diag(Laux));
-
-% Sort descending
-[L, I] = sort(Lraw, 'descend');
-Zs = Z(:, I);
-
-% Normalize eigenvectors in W-inner-product: Z' W Z = I
-an = diag(Zs' * W * Zs);
-an = sqrt(max(an, eps));
-Zn = Zs ./ (an');  % normalize columns
-
-% Choose nconf
-nconf = pme.choose_nconf(L, cfg.CI);
+% ---- vector weights + direct or snapshot eigenproblem ----
+[W, statsW] = pme.weights_diag(delta, layout, cfg, Uinfo, blocks);
+snapshot_options = struct();
+if isfield(cfg, 'snapshot'), snapshot_options = cfg.snapshot; end
+snapshot = pme.decompose(Pc, W, snapshot_options, cfg.solver);
+L = snapshot.eigenvalues;
+Zn = snapshot.modes;
+[nconf, selection] = pme.choose_nconf(L, cfg.CI, ...
+    snapshot.info.total_variance, snapshot.info.cluster_rtol, ...
+    snapshot.info.eigenvalue_threshold);
+statsW.snapshot = snapshot.info;
+selection_fields = fieldnames(selection);
+for k = 1:numel(selection_fields)
+    name = selection_fields{k};
+    statsW.snapshot.(name) = selection.(name);
+end
 
 % Reduced basis
 Zr = Zn(:,1:nconf);
 Lr = L(1:nconf);
 
 % Coordinates (full and reduced)
-ak_full = Pc' * W * Zn;     % [S x N]
+ak_full = snapshot.coordinates; % [S x numerical_rank]
 alpha   = ak_full(:,1:nconf);
 
 % alpha statistics (your alfak)
@@ -106,7 +107,7 @@ end
 
 % ---- pack model ----
 model = struct();
-model.version = "1.2";
+model.version = "1.3.0";
 model.mode    = string(cfg.mode);
 model.cfg     = cfg;
 model.layout  = layout;

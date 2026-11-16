@@ -28,7 +28,7 @@
 Unlike standard dimensionality reduction techniques (e.g. PCA/POD), PME:
 
 - preserves a **direct analytical link to the original design variables**
-- enables **exact backmapping to the parametric model**
+- provides **analytical reconstruction of the original design variables**
 - supports **weighted and physics-aware embeddings**
 
 This makes PME particularly suited for **CAD-based engineering design workflows**, where interpretability and parametric consistency are essential.
@@ -73,8 +73,18 @@ PME addresses these limitations by constructing a **low-dimensional embedding of
 - **JSON-driven workflows** for reproducibility  
 - **analytical backmapping** to original variables  
 - **weighted and physics-aware embeddings**  
+- **direct and snapshot formulations** in MATLAB and Python, with automatic
+  solver selection, diagonal weights and numerical-rank control
+- **streamed observation readers**, compact native-variable models and
+  cross-Gram projection for data larger than memory
 - **cross-language regression testing** (MATLAB ↔ Python)  
-- benchmark-ready structure for **glider** and **airfoil** cases  
+- benchmark configurations for **glider**, **airfoil** and **propeller** cases
+- [complete Zenodo airfoil regression](docs/zenodo-regression.md) and a
+  [reproducible million-coordinate experiment](docs/reproducibility.md)
+
+See [Snapshot formulation](docs/snapshot.md) for the equations, numerical
+tolerances, model compatibility and memory limits in version 1.3.0.
+Published packages are available through the PyPI badge.
 
 ---
 
@@ -97,6 +107,9 @@ Core components:
 
 ## Quick start
 
+Run these commands from the repository root after installing the Python package
+or making MATLAB available. The bundled tiny case needs no dataset download.
+
 ### MATLAB
 
     matlab -batch "run_pme('tests/cases/test_glider.json')"
@@ -111,11 +124,28 @@ Core components:
 
     pme-back tests/cases/test_glider_back.json
 
+### Solver configuration
+
+The same fitting JSON is used by MATLAB and Python. Distributed examples and
+benchmarks explicitly set:
+
+```json
+{"solver": "auto"}
+```
+
+`auto` chooses between the direct observation covariance and the snapshot
+sample Gram matrix. Select `direct` or `snapshot` explicitly for a matched
+comparison. Existing inputs without `solver` also default to `auto`; no input
+migration is required. This option belongs to the fitting case, not the
+backmapping JSON. See the [configuration specification](docs/config_spec.md).
+
 ---
 
 ## MATLAB–Python consistency
 
-PME-toolkit includes a **cross-language regression test** on a reference glider case.
+PME-toolkit includes shared MATLAB/Python fixtures, a reference glider case,
+and a [complete Zenodo airfoil regression](docs/zenodo-regression.md) covering
+PME, PI-PME and PD-PME with all three solver settings.
 
 The regression validates:
 
@@ -131,6 +161,7 @@ Benchmark definitions are available for:
 
 - `glider`
 - `airfoil`
+- `propeller` (standard PME)
 
 Lightweight datasets:
 
@@ -154,9 +185,18 @@ https://cnr-inm-mao.github.io/pme-toolkit/
 
 ### Python
 
+Install the latest published package from PyPI:
+
     pip install pme-toolkit
 
-    pip install -e python/
+To use the source revision checked out in this repository:
+
+    pip install -e ./python
+
+The direct/snapshot solver setting and streamed APIs described here require
+version 1.3.0 or later. To install this release explicitly:
+
+    pip install pme-toolkit==1.3.0
 
 ### MATLAB
 
@@ -180,9 +220,12 @@ https://cnr-inm-mao.github.io/pme-toolkit/
 
 PME-toolkit is an **actively developed research software package**.
 
-- Python: fully functional and recommended  
-- MATLAB: reference implementation for validation  
-- cross-language consistency ensured  
+- MATLAB and Python implement PME, PI-PME and PD-PME, direct and snapshot
+  fitting, and the advanced streamed APIs.
+- Cross-language checks cover the shared fixtures and the cases documented
+  in [Reproducibility](docs/reproducibility.md).
+- The standard case runners load the database into memory. Large observation
+  sets use the reader-based API described in [Snapshot formulation](docs/snapshot.md).
 
 ---
 

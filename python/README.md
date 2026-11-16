@@ -23,15 +23,22 @@ It is aligned with the MATLAB implementation and validated through **cross-langu
 
 ### From PyPI
 
+This installs the latest published version:
+
 ```
 pip install pme-toolkit
 ```
 
 ### From source (development mode)
 
+Run from the repository root to install the checked-out source revision:
+
 ```
 pip install -e python/
 ```
+
+The solver and streaming APIs described below require version 1.3.0 or later.
+To install this release explicitly, use `pip install pme-toolkit==1.3.0`.
 
 ---
 
@@ -54,7 +61,25 @@ The CLI:
 * parses the JSON configuration
 * executes the PME workflow
 * writes outputs to the specified `outdir`
-* ensures consistency with MATLAB results
+* uses the same case schema as MATLAB, with zero-based JSON indices
+
+## Solver and output settings
+
+Fitting cases accept:
+
+```json
+{"solver": "auto"}
+```
+
+`auto` selects the smaller of the direct observation covariance and snapshot
+sample Gram problems. Use `direct` or `snapshot` to choose explicitly. Older
+case files without `solver` remain valid and default to `auto`.
+
+The runner writes `report.mat` and, when `io.save_model=true` (the default),
+`model.npz`. Set the latter flag when a subsequent `pme-back` run needs a saved
+model. `io.transpose_if` accepts `auto`, `never` and `always`; `auto` infers
+orientation from the configured row layout. Relative paths are resolved
+against the fitting JSON directory.
 
 ---
 
@@ -70,6 +95,16 @@ model = fit_from_case("tests/cases/test_glider.json")
 print(model.nconf)
 print(model.alpha_train.shape)
 ```
+
+`fit_from_case` fits existing local inputs and returns a model without writing
+the report or plots. Use `pme_toolkit.run_case.run_case` for the complete case
+workflow, including dataset retrieval when configured.
+
+For observations read or generated in blocks, use `fit_streaming`,
+`transform_streaming` and `backmap_streaming`. The regular runner keeps the
+database in memory for every solver setting. See the
+[Python API](https://cnr-inm-mao.github.io/pme-toolkit/python_api/) and
+[snapshot formulation](https://cnr-inm-mao.github.io/pme-toolkit/snapshot/).
 
 ---
 
@@ -98,6 +133,8 @@ Test suite covers:
 * PME workflows
 * backmapping
 * regression against MATLAB reference
+* direct/snapshot agreement, numerical rank and repeated eigenvalue clusters
+* streamed fitting, independent query projection and native backmapping
 
 ---
 
@@ -117,5 +154,6 @@ Test suite covers:
 
 The Python implementation is **fully functional** for PME, PI-PME, and PD-PME within the current scope.
 
-It is actively maintained and serves as a **production-ready interface** for reproducible PME workflows.
+It is maintained alongside the MATLAB implementation. The shared fixtures and
+complete airfoil regression specify the verified cross-language coverage.
 

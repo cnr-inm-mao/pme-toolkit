@@ -27,8 +27,12 @@ This enables:
 Backmapping requires:
 
 - a trained embedding model (from a previous PME run)
-- a reduced coordinates vector
+- a normalized reduced-coordinate vector in `[0,1]^N` for the standalone runner
 - the original configuration file used to build the model
+
+The case must have been run with model saving enabled. The saved format is
+`model.npz` for Python and `model.mat` for MATLAB. The fitting solver is already
+encoded in the model and is not selected again during backmapping.
 
 ---
 
@@ -50,7 +54,7 @@ Backmapping is defined through a dedicated JSON file.
 
 See:
 
-- Backmapping configuration
+- [Backmapping configuration](backmapping_config.md)
 
 for the complete specification.
 
@@ -60,8 +64,9 @@ for the complete specification.
 
 The reduced coordinates are provided through an external file (e.g. `.txt`):
 
-- each configuration corresponds to one vector `x`
-- dimensionality must match the number of retained modes
+- each call processes one normalized vector `x01`
+- its length must equal `reduced_space.nconf`, or the full retained dimension
+  when that field is omitted
 
 ---
 
@@ -78,7 +83,10 @@ Output format and layout are defined in the configuration file.
 
 ## Denormalization
 
-Backmapping includes a denormalization step that maps reduced coordinates back to the original variable scale.
+The standalone workflow first maps `x01` to physical reduced coordinates
+`alpha`, then applies the native rows of the saved basis and restores the
+original variable scaling. The analytical map is available with either fitting
+solver; truncation can prevent exact recovery of a particular training design.
 
 This depends on:
 

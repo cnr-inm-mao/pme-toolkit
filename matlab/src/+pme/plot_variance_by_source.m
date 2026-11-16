@@ -33,7 +33,7 @@ xlabel(ax, 'Number of retained modes, k [-]');
 ylabel(ax, 'Retained variance [-]');
 title(ax, sprintf('Retained variance by information source (%s)', upper(string(rep.mode))), ...
     'FontWeight', 'bold');
-xlim(ax, [k(1), k(end)]);
+if numel(k) == 1, xlim(ax, [0.5 1.5]); else, xlim(ax, [k(1), k(end)]); end
 ylim(ax, [0, 1.05]);
 
 labels = cell(1, numel(sources));

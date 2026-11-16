@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from .config_loader import _baseline_col_zero_based
 
 Array = NDArray[np.float64]
 BoolArray = NDArray[np.bool_]
@@ -50,19 +51,6 @@ def _cfg_filters_defaults(cfg: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _baseline_col_zero_based(cfg: dict[str, Any], ns: int) -> int:
-    """
-    MATLAB uses 1-based baseline_col.
-    Python internally uses 0-based indexing.
-    """
-    bc = int(cfg.get("baseline_col", 1))
-    if 1 <= bc <= ns:
-        return bc - 1
-    if 0 <= bc < ns:
-        return bc
-    raise ValueError(f"baseline_col={bc} out of bounds for {ns} samples")
-
-
 def _force_keep_baseline(mask: BoolArray, cfg: dict[str, Any]) -> None:
     ns = mask.size
     bc = _baseline_col_zero_based(cfg, ns)
@@ -104,6 +92,8 @@ def _goal_keep_mask(
     db_current: Array,
     cfg: dict[str, Any],
     layout: dict[str, Any],
+    *,
+    baseline_col: int,
 ) -> BoolArray:
     """
     Goal-oriented hard constraints on currently kept columns.
@@ -119,17 +109,7 @@ def _goal_keep_mask(
 
     keep = np.ones(db_current.shape[1], dtype=bool)
 
-    baseline_col = goal_cfg.get("baseline_col", cfg.get("baseline_col", 1))
-    baseline_col = int(baseline_col)
-    if 1 <= baseline_col <= db_current.shape[1]:
-        bc = baseline_col - 1
-    elif 0 <= baseline_col < db_current.shape[1]:
-        bc = baseline_col
-    else:
-        raise ValueError(
-            f"[filters][goal] baseline_col={baseline_col} out of bounds "
-            f"(1..{db_current.shape[1]})"
-        )
+    bc = baseline_col
 
     if isinstance(metrics, dict):
         metrics = [metrics]
@@ -339,7 +319,16 @@ def apply_filters(
                 idx_kept = np.flatnonzero(mask)
                 db_cur = db[:, idx_kept]
 
-                keep_local = _goal_keep_mask(db_cur, cfg, layout)
+                goal_baseline = _baseline_col_zero_based(
+                    {"baseline_col": goal_cfg.get("baseline_col", cfg.get("baseline_col", 0))},
+                    ns,
+                )
+                baseline_positions = np.flatnonzero(idx_kept == goal_baseline)
+                if baseline_positions.size == 0:
+                    raise ValueError("Goal baseline column was removed by an earlier filter")
+                keep_local = _goal_keep_mask(
+                    db_cur, cfg, layout, baseline_col=int(baseline_positions[0]),
+                )
                 kept_step = int(np.sum(keep_local))
 
                 mask[idx_kept[~keep_local]] = False

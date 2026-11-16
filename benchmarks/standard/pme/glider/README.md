@@ -1,55 +1,46 @@
 # Standard benchmark — PME — glider
 
-This benchmark defines a **standard dataset-selection workflow** for the **glider** case using **PME**.
+This case runs PME on the glider dataset with the standard sample-selection settings in `case.json`.
+The same JSON configuration is used by MATLAB and Python.
 
-The workflow is specified through **JSON configuration files** and can be executed with both **MATLAB and Python implementations**.
+## Solver
 
----
+The case explicitly sets `"solver": "auto"`. The fit selects the smaller
+direct or snapshot eigenproblem. Use `"direct"` or `"snapshot"` to select
+a solver explicitly; omitting the field also defaults to `"auto"`.
+See the [solver documentation](../../../../docs/snapshot.md).
 
-## Files
+## Run
 
-- `case.json` — configuration for the dimensionality-reduction run  
-- `backmapping.json` — example configuration for backmapping  
+After [installation](../../../../docs/quickstart.md), run from the repository root:
 
----
+```bash
+pme-run benchmarks/standard/pme/glider/case.json
+```
 
-## Dataset
+or:
 
-This benchmark relies on the **glider dataset** described in:
+```bash
+matlab -batch "run_pme('benchmarks/standard/pme/glider/case.json')"
+```
 
-    databases/glider/
+The [dataset metadata](../../../../databases/glider/dataset.json) describes
+the external data. Missing dataset files are downloaded by the case runner.
+Outputs are written to `io.outdir`, relative to the case directory.
 
-The dataset may be:
+## Backmapping
 
-- already available locally, or  
-- referenced/downloaded through the metadata defined in the repository  
+Run the fit first to save the model for the selected language.
+The supplied `backmapping.json` reads the example coordinates from `x01.txt`.
+If the fit settings change the retained dimension, keep the requested
+`reduced_space.nconf` and input length consistent with the saved model.
 
----
+```bash
+pme-back benchmarks/standard/pme/glider/backmapping.json
+```
 
-## Workflow
+or:
 
-Run PME:
-
-    pme-run case.json
-
-or
-
-    matlab -batch "run_pme('case.json')"
-
-Run backmapping:
-
-    pme-back backmapping.json
-
-or
-
-    matlab -batch "run_back('backmapping.json')"
-
-Outputs are written to the `outdir` specified in the JSON configuration.
-
----
-
-## Notes
-
-- This benchmark represents a **reference configuration** for the glider case  
-- It is used for **testing, validation, and reproducibility**  
-- The same configuration is compatible with both MATLAB and Python  
+```bash
+matlab -batch "run_back('benchmarks/standard/pme/glider/backmapping.json')"
+```

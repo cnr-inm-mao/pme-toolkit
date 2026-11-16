@@ -1,21 +1,21 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pme-toolkit"
-version = "1.2.0"
+version = "1.3.0"
 description = "Python implementation of PME-toolkit with PME, PI-PME, and PD-PME workflows"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
   { name = "Andrea Serani", email = "andrea.serani@cnr.it" }
 ]
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",

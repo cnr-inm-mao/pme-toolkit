@@ -16,6 +16,7 @@ nav:
 
   - Core concepts:
       - Workflow: workflow.md
+      - Snapshot formulation: snapshot.md
       - Input data: input_data.md
       - Configuration: config_spec.md
 
@@ -23,6 +24,7 @@ nav:
       - Benchmarks: benchmarks.md
       - Datasets: datasets.md
       - Reproducibility: reproducibility.md
+      - Zenodo regression: zenodo-regression.md
 
   - Backmapping:
       - Overview: backmapping.md

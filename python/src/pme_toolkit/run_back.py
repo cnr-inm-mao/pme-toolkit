@@ -28,7 +28,7 @@ def _resolve_outdir_from_case(cfg_case: dict[str, Any], base_dir: Path) -> Path:
     outdir = io_cfg.get("outdir")
     if outdir:
         return _resolve_path(outdir, base_dir)
-    return (base_dir / "results_py").resolve()
+    return (base_dir / "results").resolve()
 
 
 def _read_vector(path: Path, fmt: str) -> np.ndarray:

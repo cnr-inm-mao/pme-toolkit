@@ -19,8 +19,8 @@ assert(~isempty(out), "PME run failed")
 assert(isstruct(out), "PME output is not a struct")
 assert(isfield(out, "model"), "PME output does not contain field 'model'")
 
-model = out.model; %#ok<NASGU>
-save(fullfile(results_dir, "model.mat"), "model")
+assert(out.saved.model, "The configured model was not saved")
+assert(isfile(fullfile(results_dir, "model.mat")), "Model file not found")
 
 assert(isfile(fullfile(results_dir, "report.mat")), ...
     "Report file not found: %s", fullfile(results_dir, "report.mat"))

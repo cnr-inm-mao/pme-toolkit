@@ -6,15 +6,16 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.linalg import eig
 
-from .config_loader import load_case_json, validate_physics_config
+from .config_loader import _baseline_col_zero_based, load_case_json, validate_physics_config
 from .filters import apply_filters
-from .io import load_mat_database, load_mat_range
+from .io import load_mat_database, load_mat_range, orient_database
 from .layout import parse_layout
-from .weights import build_weights
+from .snapshot import decompose
+from .weights import build_weights_diag
 
 import json
+import warnings
 
 Array = NDArray[np.float64]
 
@@ -24,14 +25,16 @@ def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
     out = dict(cfg)
 
     out.setdefault("mode", "pme")
-    out.setdefault("CI", 0.95)
-    out.setdefault("baseline_col", 1)  # MATLAB-style default (1-based)
+    out.setdefault("CI", 0.99)
+    out.setdefault("solver", "auto")
+    out.setdefault("baseline_col", 0)
 
     out.setdefault("filters", {})
     out.setdefault("io", {})
     out.setdefault("phys", {})
     out.setdefault("geom", {})
-    out.setdefault("vars", {})
+    out["vars"] = dict(out.get("vars", {}) or {})
+    out["vars"].setdefault("use_db_range_if_missing", True)
 
     out["phys"].setdefault("fields", [])
     out["phys"].setdefault("scalars", [])
@@ -40,19 +43,38 @@ def _defaults(cfg: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _choose_nconf(eigvals: Array, ci: float) -> int:
+def _choose_nconf(
+    eigvals: Array,
+    ci: float,
+    total_variance: float | None = None,
+    cluster_rtol: float = 1e-10,
+    cluster_atol: float = 0.0,
+) -> int:
+    """Choose a complete resolved eigenspace against the full weighted trace."""
     eigvals = np.asarray(eigvals, dtype=float).reshape(-1)
-    if eigvals.size == 0:
-        return 1
-
-    cum = np.cumsum(eigvals)
-    tot = float(cum[-1])
-    if tot <= 0.0:
-        return 1
-
-    ratio = cum / tot
-    idx = int(np.searchsorted(ratio, ci, side="left"))
-    return min(idx + 1, eigvals.size)
+    if eigvals.size == 0 or np.any(~np.isfinite(eigvals)) or np.any(eigvals <= 0):
+        raise ValueError("Mode selection requires resolved positive eigenvalues")
+    if not np.isfinite(ci) or not 0 < ci <= 1:
+        raise ValueError("CI must lie in (0, 1]")
+    total = float(np.sum(eigvals)) if total_variance is None else float(total_variance)
+    if not np.isfinite(total) or total <= 0:
+        raise ValueError("Total weighted variance must be positive and finite")
+    ratio = np.cumsum(eigvals) / total
+    tolerance = 10 * np.finfo(float).eps
+    nconf = min(int(np.searchsorted(ratio + tolerance, ci, side="left")) + 1, eigvals.size)
+    while nconf < eigvals.size:
+        left, right = eigvals[nconf - 1 : nconf + 1]
+        if left - right > max(cluster_atol, cluster_rtol * max(left, right)):
+            break
+        nconf += 1
+    if ratio[nconf - 1] + tolerance < ci:
+        warnings.warn(
+            f"Requested CI={ci:g} exceeds the resolved variance fraction "
+            f"{ratio[nconf - 1]:.12g}; retaining all resolved modes",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return nconf
 
 
 def _slice_blocks(db: Array, layout: dict[str, Any]) -> dict[str, Array]:
@@ -99,6 +121,8 @@ def _prepare_vars(
     ubase: Array,
     cfg: dict[str, Any],
     urange_full: Array | None,
+    *,
+    baseline_col: int = 0,
 ) -> tuple[Array, dict[str, Any]]:
     vars_cfg = dict(cfg.get("vars", {}) or {})
     mbase = int(vars_cfg["Mbase"])
@@ -115,7 +139,7 @@ def _prepare_vars(
     uraw_act = ubase[idx_active, :]
 
     if urange_full is None:
-        if bool(vars_cfg.get("use_db_range_if_missing", False)):
+        if bool(vars_cfg.get("use_db_range_if_missing", True)):
             urange_full = np.column_stack(
                 [np.min(ubase, axis=1), np.max(ubase, axis=1)]
             )
@@ -134,7 +158,7 @@ def _prepare_vars(
             "Urange": None,
             "Urange_full": None,
             "Urange_source": urange_source,
-            "Ubase_baseline_raw": np.asarray(ubase[:, 0], dtype=float),
+            "Ubase_baseline_raw": np.asarray(ubase[:, baseline_col], dtype=float),
         }
 
     urange_full = np.asarray(urange_full, dtype=float)
@@ -177,7 +201,7 @@ def _prepare_vars(
         "Urange_source": urange_source,
         "min_after_clip": float(np.min(uact)),
         "max_after_clip": float(np.max(uact)),
-        "Ubase_baseline_raw": np.asarray(ubase[:, 0], dtype=float),
+        "Ubase_baseline_raw": np.asarray(ubase[:, baseline_col], dtype=float),
     }
 
 
@@ -207,19 +231,6 @@ def _compose_p(mode: str, d: Array, uact: Array, f: Array, c: Array) -> Array:
         return np.vstack(blocks)
 
     raise ValueError(f"Unknown mode: {mode}")
-
-
-def _baseline_col_zero_based(cfg: dict[str, Any], ns: int) -> int:
-    """
-    MATLAB-style baseline_col is 1-based.
-    Allow also Python-style 0-based for robustness.
-    """
-    bc = int(cfg.get("baseline_col", 1))
-    if 1 <= bc <= ns:
-        return bc - 1
-    if 0 <= bc < ns:
-        return bc
-    raise ValueError(f"baseline_col={bc} out of range for {ns} samples")
 
 
 def _baseline_col_local(cfg: dict[str, Any], filter_mask: Array, ns_local: int) -> int:
@@ -260,6 +271,15 @@ def _u_rows_in_p(mode: str, dlen: int, mact: int) -> tuple[int, int]:
     raise ValueError(f"Unknown mode: {mode}")
 
 
+def _w_as_diag(arr) -> Array:
+    """Coerce a stored W (legacy dense (R, R) or new 1D (R,)) to a 1D diagonal."""
+    a = np.asarray(arr, dtype=float)
+    if a.ndim == 2:
+        # legacy: extract the diagonal of a dense block-diagonal matrix
+        return np.ascontiguousarray(np.diag(a))
+    return np.ascontiguousarray(a.reshape(-1))
+
+
 def _weighted_fit(
     p: Array,
     mode: str,
@@ -272,42 +292,27 @@ def _weighted_fit(
     """
     Generic weighted fit for PME / PI-PME / PD-PME.
     """
-    s = p.shape[1]
-
     p0 = p[:, [baseline_col]]
     delta = p - p0
     delta_m = np.mean(delta, axis=1, keepdims=True)
     pc = delta - delta_m
 
-    w, stats_w = build_weights(delta, layout, cfg, uinfo, blocks)
+    w_diag, stats_w = build_weights_diag(delta, layout, cfg, uinfo, blocks)
 
-    a = (pc @ pc.T) / float(s)
-    aw = a @ w
-
-    eigvals_raw, eigvecs_raw = eig(aw)
-    eigvals_raw = np.real(eigvals_raw)
-    eigvecs_raw = np.real(eigvecs_raw)
-
-    order = np.argsort(eigvals_raw)[::-1]
-    l_full = np.maximum(eigvals_raw[order], 0.0)
-    z_full = eigvecs_raw[:, order]
-
-    # Normalize Z so that Z' W Z = I
-    an = np.diag(z_full.T @ w @ z_full)
-    an = np.sqrt(np.maximum(an, np.finfo(float).eps))
-    z_full = z_full / an[None, :]
-
-    ak_full = pc.T @ w @ z_full
+    snapshot = decompose(pc, w_diag, cfg.get("snapshot"), cfg["solver"])
+    stats_w["snapshot"] = snapshot["info"]
 
     return {
         "P0": p0,
         "delta_m": delta_m,
-        "W": w,
+        # W is stored as its 1D diagonal (length R) -- the dense (R, R)
+        # matrix is never materialised; see build_weights_diag.
+        "W": w_diag,
         "statsW": stats_w,
-        "L_full": l_full,
-        "Z_full": z_full,
+        "L_full": snapshot["eigenvalues"],
+        "Z_full": snapshot["modes"],
         "Pc": pc,
-        "ak_full": ak_full,
+        "ak_full": snapshot["coordinates"],
     }
 
 def _jsonify_layout(obj):
@@ -366,7 +371,8 @@ class PmeModel:
         delta = p - self.p0[:, [0]]
         pc = delta - self.delta_m[:, [0]]
 
-        alpha = pc.T @ self.w @ self.z_reduced
+        # self.w is the 1D diagonal of the weight matrix (length R)
+        alpha = pc.T @ (self.w[:, None] * self.z_reduced)
         return np.asarray(alpha, dtype=float)
 
     def transform_valid(self, db: Array) -> Array:
@@ -472,7 +478,7 @@ class PmeModel:
             p0=np.asarray(data["p0"], dtype=float),
             delta_m=np.asarray(data["delta_m"], dtype=float),
             pc=np.asarray(data["pc"], dtype=float),
-            w=np.asarray(data["w"], dtype=float),
+            w=_w_as_diag(data["w"]),
             z_reduced=np.asarray(data["z_reduced"], dtype=float),
             eigvals_reduced=np.asarray(data["eigvals_reduced"], dtype=float),
             eigvals_full=np.asarray(data["eigvals_full"], dtype=float),
@@ -529,11 +535,12 @@ def fit_model(
         if db_total_shape is None:
             db_total_shape = tuple(db.shape)
 
+    baseline_col = _baseline_col_local(cfg, filter_mask, db_fit.shape[1])
     blocks = _slice_blocks(db_fit, layout)
-    uact, uinfo = _prepare_vars(blocks["Ubase"], cfg, urange_full)
+    uact, uinfo = _prepare_vars(
+        blocks["Ubase"], cfg, urange_full, baseline_col=baseline_col,
+    )
     p = _compose_p(mode, blocks["D"], uact, blocks["F"], blocks["C"])
-
-    baseline_col = _baseline_col_local(cfg, filter_mask, p.shape[1])
 
     weighted = _weighted_fit(
         p,
@@ -553,11 +560,24 @@ def fit_model(
     pc = np.asarray(weighted["Pc"], dtype=float)
     ak_full = np.asarray(weighted["ak_full"], dtype=float)
 
-    nconf = _choose_nconf(l_full, float(cfg["CI"]))
+    snapshot_info = weighted["statsW"]["snapshot"]
+    nconf = _choose_nconf(
+        l_full,
+        float(cfg["CI"]),
+        snapshot_info["total_variance"],
+        snapshot_info["cluster_rtol"],
+        snapshot_info["eigenvalue_threshold"],
+    )
+    achieved_ci = float(np.sum(l_full[:nconf]) / snapshot_info["total_variance"])
+    snapshot_info.update(
+        achieved_ci=achieved_ci,
+        resolved_variance_fraction=float(np.sum(l_full) / snapshot_info["total_variance"]),
+        ci_met=bool(achieved_ci + 10 * np.finfo(float).eps >= float(cfg["CI"])),
+    )
     z_reduced = z_full[:, :nconf]
     eigvals_reduced = l_full[:nconf]
 
-    alpha_train = pc.T @ w @ z_reduced
+    alpha_train = ak_full[:, :nconf]
 
     return PmeModel(
         mode=mode,
@@ -627,7 +647,10 @@ def fit_from_case(case_json: str | Path) -> PmeModel:
     if not dbfile:
         raise ValueError("cfg.io.dbfile is required")
 
-    db = load_mat_database(dbfile)
+    db = orient_database(
+        load_mat_database(dbfile), int(parse_layout(cfg)["totalRows"]),
+        io_cfg.get("transpose_if", "auto"),
+    )
 
     urange_file = vars_cfg.get("Urange_file")
     urange = load_mat_range(urange_file) if urange_file else None

@@ -1,0 +1,92 @@
+name: Zenodo snapshot regression
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "python/**"
+      - "matlab/**"
+      - "tests/python/zenodo_snapshot_regression.py"
+      - "tests/matlab/export_zenodo_regression.m"
+      - "benchmarks/standard/**/airfoil/**"
+      - "databases/airfoil/dataset.json"
+      - ".github/workflows/zenodo-regression.yml"
+  workflow_dispatch:
+
+jobs:
+  airfoil:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OPENBLAS_NUM_THREADS: "2"
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout unchanged pre-snapshot implementation
+        uses: actions/checkout@v4
+        with:
+          ref: 68309805e9aff5a9b877c33982c7181d8faa550b
+          path: legacy
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install candidate package
+        run: python -m pip install -e ./python
+
+      - name: Download and verify complete Zenodo airfoil database
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tests/python')
+          from zenodo_snapshot_regression import prepare_dataset
+          prepare_dataset(Path.cwd())
+          PY
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+
+      - name: Run unchanged MATLAB implementation
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            repo = string(getenv('GITHUB_WORKSPACE'));
+            addpath(fullfile(repo,'legacy','matlab','src'));
+            addpath(fullfile(repo,'tests','matlab'));
+            export_zenodo_regression(repo,fullfile(getenv('RUNNER_TEMP'),'airfoil_legacy.mat'),"legacy");
+
+      - name: Run current MATLAB solvers on all retained samples
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            repo = string(getenv('GITHUB_WORKSPACE'));
+            addpath(fullfile(repo,'matlab','src'));
+            addpath(fullfile(repo,'tests','matlab'));
+            export_zenodo_regression(repo,fullfile(getenv('RUNNER_TEMP'),'airfoil_current.mat'));
+
+      - name: Compare original and current Python and MATLAB implementations
+        run: |
+          python -u tests/python/zenodo_snapshot_regression.py \
+            --legacy-root legacy \
+            --matlab-result "$RUNNER_TEMP/airfoil_current.mat" \
+            --matlab-legacy-result "$RUNNER_TEMP/airfoil_legacy.mat" \
+            --output "$RUNNER_TEMP/airfoil_regression.json"
+
+      - name: Preserve numerical regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: airfoil-regression
+          path: |
+            ${{ runner.temp }}/airfoil_regression.json
+            ${{ runner.temp }}/airfoil_current.mat
+            ${{ runner.temp }}/airfoil_legacy.mat
+          if-no-files-found: ignore

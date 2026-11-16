@@ -10,6 +10,7 @@ Dataset metadata is documented in:
 
 - `databases/glider/`
 - `databases/airfoil/`
+- `databases/propeller/`
 
 These folders describe:
 
@@ -37,6 +38,12 @@ The main benchmark datasets are distributed via Zenodo:
     Design-Space Dimensionality Reduction Benchmark Dataset – RAE2822 Airfoil (1.0) [Data set].
     https://doi.org/10.5281/zenodo.18958555
 
+### Propeller
+
+The standard PME case references Zenodo record
+[10.5281/zenodo.20207996](https://doi.org/10.5281/zenodo.20207996), version 1.0,
+through `databases/propeller/dataset.json`.
+
 ---
 
 ## Dataset file
@@ -47,7 +54,11 @@ The dataset is specified in the configuration file:
         "dbfile": "path/to/database.mat"
     }
 
-The file typically contains:
+For a shared MATLAB/Python input, store the feature-by-sample database matrix
+in a MAT file under `database` or `DB`. Variable bounds, when supplied, use an
+`Mbase`-by-2 matrix of minima and maxima in `range_design` or `Urange`.
+
+The database contains:
 
 - geometric data  
 - design variables  
@@ -97,12 +108,23 @@ All dataset components must:
 
 ## Usage
 
-To use a dataset:
+For the supplied benchmark cases, `run_case` checks for the required files
+and downloads the archive described by the matching `dataset.json` when the
+files are absent. Both language runners use this metadata. The download is
+unnecessary for the self-contained tiny glider fixture.
+
+To provide a dataset manually:
 
 1. download the dataset from Zenodo  
 2. extract it locally  
 3. update the `dbfile` path in the JSON configuration  
 4. run the benchmark  
+
+Relative input and output paths are resolved from the directory containing
+the fitting configuration. Keep the dataset record and source definitions
+fixed when comparing `direct` and `snapshot`. Neither solver choice changes
+the standard loader into a streaming reader; see the [streamed API](snapshot.md#streamed-observations-and-compact-native-models)
+for observations that cannot be held in memory.
 
 ---
 
