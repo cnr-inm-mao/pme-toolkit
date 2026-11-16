@@ -44,7 +44,7 @@ This design addresses two distinct memory regimes. The standard case workflow ho
 
 Mode selection uses the complete weighted trace and retains an entire repeated-eigenvalue cluster when the cluster intersects the requested variance threshold. Numerically unresolved modes are excluded and reported. Retained observation variance does not guarantee exact recovery of all native-parameter variations, satisfaction of parameter bounds, or physical feasibility.
 
-Ongoing work on the toolkit addresses implicit geometric representations using occupancy and signed-distance fields, integration of nonlinear PME [@Serani2026NLPME], and applications beyond shape optimization (e.g., structural optimization [@Diez2023Structural]).
+Ongoing work on the toolkit addresses implicit geometric representations using occupancy and signed-distance fields, integration of nonlinear PME [@Serani2026NLPME], and applications beyond shape optimization [e.g., structural optimization, @Diez2023Structural].
 
 # Research impact statement
 
@@ -52,7 +52,7 @@ Distributed configurations cover glider and airfoil problems for PME, PI-PME, an
 
 The [verification protocol](https://cnr-inm-mao.github.io/pme-toolkit/reproducibility/) also includes controlled spectra, independent query designs, conditioning checks, and a streamed case with 1,048,576 observation coordinates and 64 construction samples. The latter uses generated observations with a small reference calculation; it assesses the implementation at large observation dimension. MATLAB/Python comparisons are integrated into continuous integration, and generated reports record source revisions, input checksums, and numerical settings.
 
-Antoine DeBlois contributed a [Python snapshot solver](https://github.com/cnr-inm-mao/pme-toolkit/pull/1) in May 2026. Version 1.3.0 integrates this contribution into the common MATLAB/Python workflow. Kazuko Fuchi's [June 2026 report](https://github.com/cnr-inm-mao/pme-toolkit/issues/4) led to matching input checks in both languages: PI-PME and PD-PME now reject configurations without physical inputs before loading the database. Regression tests cover these errors, valid field-only and scalar-only inputs, and geometry-only PME.
+Version 1.3.0 integrates a [Python snapshot solver](https://github.com/cnr-inm-mao/pme-toolkit/pull/1) contributed in May 2026 into the common MATLAB/Python workflow. A [configuration issue reported in June 2026](https://github.com/cnr-inm-mao/pme-toolkit/issues/4) led to matching input checks in both languages: PI-PME and PD-PME now reject configurations without physical inputs before loading the database. Regression tests cover these errors, valid field-only and scalar-only inputs, and geometry-only PME.
 
 The MIT-licensed [source code](https://github.com/cnr-inm-mao/pme-toolkit), [documentation](https://cnr-inm-mao.github.io/pme-toolkit/), and [Python distribution](https://pypi.org/project/pme-toolkit/1.3.0/) are publicly available. The version-specific archive is preserved on Zenodo [@Serani2026Toolkit].
 
