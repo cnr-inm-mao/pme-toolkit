@@ -56,7 +56,7 @@ The MIT-licensed [source code](https://github.com/cnr-inm-mao/pme-toolkit), [doc
 
 # AI usage disclosure
 
-OpenAI ChatGPT and Codex assisted debugging, refactoring, input validation, and regression testing of the existing MATLAB and Python implementations, focusing on numerical robustness and parity. They also supported documentation. ChatGPT (GPT-6 Astra Pro) assisted manuscript drafting and revision; Anthropic Claude supplied editorial feedback. The author made the scientific and architectural decisions, reviewed and edited the assisted material, and verified numerical behavior through comparisons with the preceding implementation, direct-snapshot regression tests, and MATLAB/Python parity checks. The author is responsible for the software, documentation, and manuscript.
+OpenAI ChatGPT and Codex assisted debugging, refactoring, input validation, and regression testing of the existing MATLAB and Python implementations, focusing on numerical robustness and parity. Generative AI also supported documentation and manuscript preparation. The author made the scientific and architectural decisions, reviewed and edited the assisted material, and verified numerical behavior through comparisons with the preceding implementation, direct-snapshot regression tests, and MATLAB/Python parity checks. The author is responsible for the software, documentation, and manuscript.
 
 # Acknowledgements
 
