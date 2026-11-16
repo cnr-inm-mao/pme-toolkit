@@ -31,10 +31,9 @@ Published software versions and archives are available through:
 
 The Python implementation is fully functional and recommended for use.  
 MATLAB remains available as a reference implementation for validation and comparison.
-While v1.3.0 is being prepared, its new APIs require the corresponding source
-checkout; the existing PyPI release does not yet provide them. See
-[Quickstart](quickstart.md) for installation and [Reproducibility](reproducibility.md)
-for the validation protocols.
+The direct/snapshot solvers and streamed APIs require version 1.3.0 or later.
+See [Quickstart](quickstart.md) for installation and
+[Reproducibility](reproducibility.md) for the validation protocols.
 
 ---
 

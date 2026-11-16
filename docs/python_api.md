@@ -89,8 +89,8 @@ The compact streaming model is distinct from `PmeModel`. The standard
 
 ## Status
 
-- published package versions are installable via PyPI; v1.3.0 candidate APIs
-  require the corresponding source checkout until that version is released
+- published package versions are installable via PyPI; the direct/snapshot
+  solvers and streamed APIs require version 1.3.0 or later
 - validated against MATLAB reference through regression tests
 - recommended for standard usage
 

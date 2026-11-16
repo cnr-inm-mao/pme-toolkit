@@ -83,8 +83,8 @@ PME addresses these limitations by constructing a **low-dimensional embedding of
   [reproducible million-coordinate experiment](docs/reproducibility.md)
 
 See [Snapshot formulation](docs/snapshot.md) for the equations, numerical
-tolerances, model compatibility and memory limits of the 1.3.0 development
-version. The latest published package remains available through the PyPI badge.
+tolerances, model compatibility and memory limits in version 1.3.0.
+Published packages are available through the PyPI badge.
 
 ---
 
@@ -193,8 +193,10 @@ To use the source revision checked out in this repository:
 
     pip install -e ./python
 
-The direct/snapshot solver setting and streamed APIs described here belong to
-the 1.3.0 development version; they require that source revision until release.
+The direct/snapshot solver setting and streamed APIs described here require
+version 1.3.0 or later. To install this release explicitly:
+
+    pip install pme-toolkit==1.3.0
 
 ### MATLAB
 

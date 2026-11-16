@@ -7,7 +7,7 @@ and semantic versioning principles.
 
 ---
 
-## [1.3.0] - Unreleased
+## [1.3.0] - 2026-11-16
 
 ### Added
 
@@ -87,6 +87,8 @@ and semantic versioning principles.
   directory even when an identically named directory exists elsewhere.
 - Correct installation and test commands, backmapping examples, output
   descriptions and validation claims across the website and repository guides.
+- Include the complete MIT license in Python source and wheel distributions,
+  with standard SPDX license metadata.
 
 ### Scope
 
@@ -97,14 +99,6 @@ and semantic versioning principles.
   before fitting, using a preliminary pass when needed.
 - See [Snapshot formulation](docs/snapshot.md) for equations, compatibility
   changes, conditioning, solver selection, and the two storage models.
-
-### Planned
-
-- Synchronize website pages and docs text with the actual dual MATLAB/Python status of the repository
-- Extend cross-language regression coverage beyond the tiny glider case
-- Broaden benchmark/test coverage for PME, PI-PME, and PD-PME cases
-- Further refine JOSS-facing documentation and review readiness material
-- Consolidate packaging, release, and citation workflows after the first PyPI/JOSS cycle
 
 ---
 

@@ -37,8 +37,8 @@ Run from the repository root to install the checked-out source revision:
 pip install -e python/
 ```
 
-The v1.3.0 solver and streaming APIs described below require the development
-source revision until that version is published.
+The solver and streaming APIs described below require version 1.3.0 or later.
+To install this release explicitly, use `pip install pme-toolkit==1.3.0`.
 
 ---
 

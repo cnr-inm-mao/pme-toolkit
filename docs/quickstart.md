@@ -17,12 +17,12 @@ Clone the repository to access ready-to-run benchmark cases:
 
     git clone https://github.com/cnr-inm-mao/pme-toolkit.git
     cd pme-toolkit
-    git switch release/1.3.0-snapshot
+    git switch --detach v1.3.0
     python -m pip install -e ./python
 
-The branch selection above installs the v1.3.0 candidate, including `auto`,
-`direct`, `snapshot` and streaming. For a published release, select its tag
-instead; released versions are listed on the repository's Releases page.
+The tag selection above installs v1.3.0, including `auto`, `direct`, `snapshot`
+and streaming. Other released versions are listed on the repository's Releases
+page.
 
 Run a reference case:
 
@@ -48,8 +48,9 @@ Run backmapping:
 
     pme-back your_backmapping_config.json
 
-The package installed from PyPI follows its published version. Use the source
-checkout above for the v1.3.0 candidate. See [Input data](input_data.md) and
+The solvers and streamed APIs require version 1.3.0 or later. Use
+`pip install pme-toolkit==1.3.0` to select this release explicitly.
+See [Input data](input_data.md) and
 [Configuration](config_spec.md) for dataset and variable definitions.
 
 ---
