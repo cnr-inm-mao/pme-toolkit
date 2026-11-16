@@ -18,13 +18,9 @@ bibliography: paper.bib
 
 # Summary
 
-Shape optimization varies geometry parameters and evaluates each candidate through numerical simulations. Exploring many parameters can require a large computational budget. PME-toolkit builds a smaller set of design coordinates from sampled shapes and, when available, simulation outputs. An analytical backmap converts a reduced design into the original parameters, so that new candidates can be passed to the same geometry generator. In the [RAE2822 airfoil benchmark](https://cnr-inm-mao.github.io/pme-toolkit/zenodo-regression/), five reduced coordinates describe a 20-parameter shape family while retaining more than 95% of the sampled geometric variance.
+PME-toolkit is an open-source package for design-space dimensionality reduction in Python and MATLAB. It constructs reduced design coordinates from samples of geometry, physical quantities, or both. An analytical backmap returns the corresponding values of the original design parameters for use in an existing geometry generator and simulation workflow.
 
 The toolkit implements Parametric Model Embedding (PME) [@Serani2023PME], Physics-Informed PME (PI-PME), and Physics-Driven PME (PD-PME) [@Serani2025EWC]. These formulations use geometric observations, combined geometric and physical observations, or physical observations alone, respectively. Python and MATLAB implementations share case definitions, numerical conventions, reporting, and verification protocols. Version 1.3.0 provides direct and snapshot eigensolvers, together with a separate interface for observations read in blocks [@Serani2026Toolkit].
-
-\autoref{fig:workflow} illustrates the reduction and native backmap for the airfoil benchmark.
-
-![PME workflow for the RAE2822 dataset [@Serani2026Airfoil]. (a) Selected construction shapes. (b) Two-coordinate view of the five-dimensional embedding. (c) Native parameters returned for the highlighted sample using all five coordinates. In the backmap, $\overline{\mathbf{u}}$ is the mean parameter vector and $\mathbf{V}_N$ contains the retained parameter modes. Geometry regeneration is a subsequent operation.](figures/pme_workflow.png){#fig:workflow width=100%}
 
 # Statement of need
 
