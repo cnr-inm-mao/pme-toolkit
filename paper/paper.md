@@ -48,7 +48,7 @@ This design addresses two distinct memory regimes. The standard case workflow ho
 
 Mode selection uses the complete weighted trace and retains an entire repeated-eigenvalue cluster when the cluster intersects the requested variance threshold. Numerically unresolved modes are excluded and reported. Retained observation variance does not guarantee exact recovery of all native-parameter variations, satisfaction of parameter bounds, or physical feasibility.
 
-Ongoing work investigates implicit geometric representations using occupancy and signed-distance fields, nonlinear embeddings, and extensions to parametric design problems beyond shape optimization.
+Ongoing work on the toolkit addresses implicit geometric representations using occupancy and signed-distance fields, integration of nonlinear PME [@Serani2026NLPME], and applications beyond shape optimization (e.g., structural optimization [@Diez2023Structural]).
 
 # Research impact statement
 
