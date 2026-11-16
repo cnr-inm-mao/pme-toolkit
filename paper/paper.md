@@ -1,5 +1,5 @@
 ---
-title: "PME-toolkit: a reproducible framework for design-space dimensionality reduction in parametric shape optimization"
+title: "PME-toolkit: parametric model embedding for design-space dimensionality reduction"
 tags:
   - dimensionality reduction
   - shape optimization
@@ -7,61 +7,67 @@ tags:
   - design optimization
 authors:
   - name: Andrea Serani
+    orcid: 0000-0002-8814-1793
     affiliation: 1
 affiliations:
   - name: CNR-INM, National Research Council-Institute of Marine Engineering, Rome, Italy
     index: 1
-date: 2026
+date: 16 November 2026
 bibliography: paper.bib
 ---
 
 # Summary
 
-PME-toolkit is an open-source framework for design-space dimensionality reduction in parametric shape optimization based on Parametric Model Embedding (PME) [@Serani2023PME] and its physics-aware extensions (PI-PME, PD-PME) [@Serani2025EWC].
+PME-toolkit is an open-source package for design-space dimensionality reduction in Python and MATLAB. It constructs reduced design coordinates from samples of geometry, physical quantities, or both. An analytical backmap returns the corresponding values of the original design parameters for use in an existing geometry generator and simulation workflow.
 
-The software builds upon previous developments and applications of PME in aerodynamic and hydrodynamic shape optimization [@SeraniAST; @Serani2024JMSE; @Gaggero2026AOR], as well as related dimensionality-reduction studies.
-
-The software provides a reproducible, benchmark-driven workflow with dual Python and MATLAB implementations, enabling consistent analysis, cross-validation, and integration within simulation-based design optimization pipelines.
+The toolkit implements Parametric Model Embedding (PME) [@Serani2023PME], Physics-Informed PME (PI-PME), and Physics-Driven PME (PD-PME) [@Serani2025EWC]. These formulations use geometric observations, combined geometric and physical observations, or physical observations alone, respectively. Python and MATLAB implementations share case definitions, numerical conventions, reporting, and verification protocols. Version 1.3.0 provides direct and snapshot eigensolvers, together with a separate interface for observations read in blocks [@Serani2026Toolkit].
 
 # Statement of need
 
-Simulation-Based Design Optimization (SBDO) is often limited by the curse of dimensionality [@Bellman1957], which arises in high-dimensional parametric design spaces.
+Simulation-based design optimization combines expensive numerical models with parameterizations that may contain redundant or weakly influential directions. Dimensionality reduction can make the search more manageable. Its usefulness depends on which variations are retained and how reduced designs are converted into inputs for the simulation workflow [@Serani2025Survey]. Geometric variance alone may also be insufficient when performance depends on features represented more clearly by physical fields or scalar responses.
 
-PME-toolkit addresses this limitation by constructing a low-dimensional embedding of the design space that preserves a direct mapping to the original variables, enabling analytical backmapping and efficient optimization in reduced coordinates.
+PME-toolkit pairs observation data with the design parameters used to generate each sample. It assigns weights to the observation sources and computes an affine backmap to the native parameters. Preprocessing, weighting, dimensionality selection, projection, backmapping, and diagnostic plots follow a common sequence for all three PME formulations. The published formulations and their aerodynamic, hydrodynamic, and propeller applications provide the scientific basis for these operations [@SeraniAST; @Serani2024JMSE; @Gaggero2026AOR].
 
-Existing dimensionality-reduction approaches in shape optimization [@Serani2025Survey] typically lack:
+# State of the field
 
-* a direct link to the original design variables,
-* reproducibility across implementations,
-* or integration within engineering workflows.
+General-purpose libraries such as scikit-learn provide principal-component analysis and inverse transformations in the fitted feature space [@Pedregosa2011]. Geometry-oriented tools such as PyGeM provide parameterized deformation methods that can supply shape observations [@Tezzele2021PyGeM]. PME-toolkit connects these two tasks: it constructs a reduced space from geometric or physical observations and maps its coordinates to the parameters of the supplied geometry model. The native parameters remain in the backmap even though they have zero weight in the reduction metric.
 
-PME-toolkit fills this gap by providing:
+The MATLAB and Python implementations read the same JSON case definitions and use matching weighting conventions, projection operations, and native-parameter backmaps. Keeping these operations together lets researchers switch between PME, PI-PME, and PD-PME using the same data preparation and output tools. Geometry and simulation packages supply their observations through array-based interfaces.
 
-* a unified implementation of PME, PI-PME, and PD-PME,
-* a JSON-driven workflow for reproducibility,
-* cross-language validation between Python and MATLAB,
-* benchmark-ready configurations for representative shape optimization problems.
+# Software design
 
-PME-toolkit establishes a reproducible and extensible foundation for integrating design-space dimensionality reduction methods within modern SBDO pipelines.
+The case workflow separates data loading and filtering, preparation of active design variables, construction of observation weights, decomposition, and downstream analysis. JSON configurations specify data sources, variable bounds, physical quantities, filters, and the requested retained-variance fraction. PME, PI-PME, and PD-PME share these operations. Both implementations reject physics-aware configurations without physical inputs, preventing a requested PI-PME or PD-PME analysis from silently omitting its physical information. Small fixtures support installation checks, while larger engineering databases are retrieved from separately archived datasets.
 
-# Key features
+Direct and snapshot decomposition operate on the same centered samples and diagonal metric. The direct solver uses a symmetric covariance matrix restricted to positive-weight observation rows; the snapshot solver uses a sample Gram matrix and recovers the modes from its eigenvectors. Automatic selection chooses the smaller eigenproblem. These alternatives share numerical-rank thresholds, retained-variance accounting, and the model interface used for projection, backmapping, reporting, and plotting. Diagonal weights are stored as vectors, avoiding a dense metric matrix. Native parameters have zero metric weight but remain in the recovered modes, preserving the analytical backmap.
 
-* Dual Python/MATLAB implementation with cross-language validation
-* Implementation of PME, PI-PME, and PD-PME
-* Analytical backmapping to original parametric variables
-* JSON-based reproducible workflows
-* Benchmark configurations for glider and airfoil cases
-* Cross-language regression testing
+This design addresses two distinct memory regimes. The standard case workflow holds its input database in memory. For larger observation dimensions, the streaming interface accepts repeatable row-block readers and accumulates the snapshot matrix without retaining the full observation array. A compact model stores the factors required for native backmapping; observation modes can optionally be written in a second pass. Projection of new observations uses construction means and consistent global weights; physics-aware projection requires the corresponding physical observations for each query. The sample Gram matrix remains dense, so its memory cost still grows quadratically with the number of construction samples.
 
-# Availability
+Mode selection uses the complete weighted trace and retains an entire repeated-eigenvalue cluster when the cluster intersects the requested variance threshold. Numerically unresolved modes are excluded and reported. Retained observation variance does not guarantee exact recovery of all native-parameter variations, satisfaction of parameter bounds, or physical feasibility.
 
-* Source code: https://github.com/cnr-inm-mao/pme-toolkit
-* Documentation: https://cnr-inm-mao.github.io/pme-toolkit/
-* PyPI package: https://pypi.org/project/pme-toolkit/
-* DOI: https://doi.org/10.5281/zenodo.18962859
+Ongoing work on the toolkit addresses implicit geometric representations using occupancy and signed-distance fields, integration of nonlinear PME [@Serani2026NLPME], and applications beyond shape optimization [e.g., structural optimization, @Diez2023Structural].
+
+# Research impact statement
+
+Distributed configurations cover glider and airfoil problems for PME, PI-PME, and PD-PME, and a propeller case for PME. The complete-database RAE2822 regression uses an archived dataset [@Serani2026Airfoil] and compares the released solvers with the preceding implementation and an independent symmetric reference. After the documented filters, it uses 8,516 samples for PME and 7,391 for PI-PME and PD-PME. Checks cover retained dimensions, explained variance, resolved eigenvalues, weighted modes, and native reconstructions. Sign changes and rotations within repeated eigenspaces are handled explicitly in the comparisons.
+
+The [verification protocol](https://cnr-inm-mao.github.io/pme-toolkit/reproducibility/) also includes controlled spectra, independent query designs, conditioning checks, and a streamed case with 1,048,576 observation coordinates and 64 construction samples. The latter uses generated observations with a small reference calculation; it assesses the implementation at large observation dimension. MATLAB/Python comparisons are integrated into continuous integration, and generated reports record source revisions, input checksums, and numerical settings.
+
+Version 1.3.0 integrates a [Python snapshot solver](https://github.com/cnr-inm-mao/pme-toolkit/pull/1) contributed in May 2026 into the common MATLAB/Python workflow. A [configuration issue reported in June 2026](https://github.com/cnr-inm-mao/pme-toolkit/issues/4) led to matching input checks in both languages: PI-PME and PD-PME now reject configurations without physical inputs before loading the database. Regression tests cover these errors, valid field-only and scalar-only inputs, and geometry-only PME.
+
+The MIT-licensed [source code](https://github.com/cnr-inm-mao/pme-toolkit), [documentation](https://cnr-inm-mao.github.io/pme-toolkit/), and [Python distribution](https://pypi.org/project/pme-toolkit/1.3.0/) are publicly available. The version-specific archive is preserved on Zenodo [@Serani2026Toolkit].
+
+# AI usage disclosure
+
+OpenAI Codex assisted debugging, refactoring, input validation, and regression testing of the existing MATLAB and Python implementations, focusing on numerical robustness and parity, and also supported documentation. The author made the scientific and architectural decisions, reviewed and edited the assisted material, and verified numerical behavior. The author is responsible for the software, documentation, and manuscript.
 
 # Acknowledgements
 
-The author acknowledges the support of the Italian Ministry of University and Research (MUR) through the PRIN 2022 program, project BIODRONES (20227JNM52, CUP B53D230055600), and the National Recovery and Resilience Plan (PNRR), Sustainable Mobility Center (CNMS), Spoke 3 Waterways (CN00000023, CUP B43C22000440001).
+The author acknowledges the support of the Italian Ministry of University and Research (MUR) through the PRIN 2022 program, project BIODRONES (20227JNM52, CUP B53D23005560006), and the National Recovery and Resilience Plan (PNRR), Sustainable Mobility Center (CNMS), Spoke 3 Waterways (CN00000023, CUP B43C22000440001).
+
+The author also acknowledges support from the U.S. Office of Naval Research (ONR) through the BEAM project, Grant No. N00014-26-1-2164, under the administration of Dr. Robert Brizzolara.
 
 This work was also conducted within the NATO AVT-404 Research Task Group on “Enhanced Design Processes of Military Vehicles through Machine Learning Methods.”
+
+The author thanks Antoine DeBlois for the contributed snapshot implementation and Kazuko Fuchi for feedback on physics-aware input validation.
+
+# References
